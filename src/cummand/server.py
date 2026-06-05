@@ -1,15 +1,21 @@
+"""Relay server — accepts HTTP and WebSocket connections on a single port."""
+
 import asyncio
 import logging
+import secrets
 import uuid
 import sys
 
 from aiohttp import web
 
 from cummand.generator import generate_code
-from cummand.tunnel import TunnelSession
+from cummand.tunnel import MAX_MSG_SIZE, TunnelSession
 
 logger = logging.getLogger(__name__)
 
+# Workaround for Windows asyncio + aiohttp issue:
+# _ProactorBasePipeTransport._call_connection_lost is called unexpectedly
+# when a WebSocket is closed during cleanup on Windows.
 if sys.platform == "win32":
     from asyncio.proactor_events import _ProactorBasePipeTransport
     _ProactorBasePipeTransport._call_connection_lost = lambda self, *args: None
@@ -21,6 +27,7 @@ LOCALHOST_SUFFIXES = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
 
 
 def _extract_code_and_path(request: web.Request) -> tuple[str | None, str]:
+    """Extract the tunnel code and remaining path from a host header or URL path."""
     host = request.host
     path = request.path
 
@@ -43,6 +50,7 @@ def _extract_code_and_path(request: web.Request) -> tuple[str | None, str]:
 
 
 async def handle_http(request: web.Request) -> web.Response:
+    """Route an HTTP request to the correct tunnel and relay the response."""
     code, remaining = _extract_code_and_path(request)
 
     tunnel = tunnels.get(code)
@@ -88,7 +96,8 @@ async def handle_http(request: web.Request) -> web.Response:
 
 
 async def ws_handler(request: web.Request) -> web.WebSocketResponse:
-    ws = web.WebSocketResponse(max_msg_size=20 * 1024 * 1024)
+    """Accept a WebSocket connection, assign a tunnel code, and relay messages."""
+    ws = web.WebSocketResponse(max_msg_size=MAX_MSG_SIZE)
     await ws.prepare(request)
 
     code = generate_code()
@@ -103,7 +112,7 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
             token = msg.data
             if isinstance(token, bytes):
                 token = token.decode()
-            if server_auth_token and token != server_auth_token:
+            if server_auth_token and not secrets.compare_digest(token, server_auth_token):
                 logger.warning("Auth rejected for %s: invalid token", code)
                 await ws.send_bytes(b"ERROR: invalid token")
                 return ws
@@ -137,7 +146,7 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
     finally:
         tunnels.pop(code, None)
         logger.info("Tunnel disconnected: %s", code)
-        for fut in list(tunnel.pending.values()):
+        for fut in tunnel.pending.values():
             if not fut.done():
                 fut.set_exception(Exception("Tunnel disconnected"))
 
@@ -145,16 +154,19 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
 
 
 async def root_handler(request: web.Request) -> web.WebSocketResponse | web.Response:
+    """Route incoming requests: WebSocket upgrades to ws_handler, others to handle_http."""
     if request.headers.get("Upgrade", "").lower() == "websocket":
         return await ws_handler(request)
     return await handle_http(request)
 
 
 async def health(request: web.Request) -> web.Response:
+    """Health check endpoint returning tunnel count."""
     return web.Response(text=f"cummand server {len(tunnels)} tunnels", status=200)
 
 
 async def run_server(port: int = 8080, auth_token: str = "") -> None:
+    """Start the aiohttp relay server on the given port."""
     global server_auth_token
     server_auth_token = auth_token
 

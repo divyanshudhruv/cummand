@@ -1,14 +1,21 @@
+"""Tunnel session dataclass — tracks tunnel metadata and state."""
+
 import asyncio
 import time
 from dataclasses import dataclass, field
-from typing import Optional
+
+import websockets
+
+
+MAX_MSG_SIZE: int = 20 * 1024 * 1024
 
 
 @dataclass
 class TunnelSession:
+    """Holds the state and metrics for an active tunnel connection."""
     code: str
     local_port: int
-    ws: any
+    ws: websockets.ClientConnection
     log_level: str = "info"
     start_time: float = field(default_factory=time.time)
     request_count: int = 0

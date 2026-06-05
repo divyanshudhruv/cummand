@@ -11,7 +11,7 @@ log-level = "info"
 retry-limit = 5
 
 [auth]
-token = "mysecret123"
+token = ""
 
 [alias.frontend]
 url = "http://localhost:3000"

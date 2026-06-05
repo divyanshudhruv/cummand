@@ -1,6 +1,7 @@
+"""Terminal dashboard — live tunnel status display using Rich."""
+
 import asyncio
 import time
-from typing import Optional
 
 from rich.console import Console
 from rich.text import Text
@@ -12,6 +13,7 @@ from cummand.tunnel import TunnelSession
 
 
 def _fmt_bytes(n: int) -> str:
+    """Format a byte count as a human-readable string (KB, MB, GB)."""
     for unit in ("B", "KB", "MB", "GB"):
         if n < 1024:
             return f"{n:.1f} {unit}"
@@ -20,6 +22,7 @@ def _fmt_bytes(n: int) -> str:
 
 
 def _fmt_uptime(seconds: float) -> str:
+    """Format a duration in seconds as a human-readable string (Xh Xm Xs)."""
     h, rem = divmod(int(seconds), 3600)
     m, s = divmod(rem, 60)
     if h > 0:
@@ -30,6 +33,7 @@ def _fmt_uptime(seconds: float) -> str:
 
 
 def _render(tunnel: TunnelSession, server_url: str) -> Layout:
+    """Build a Rich Layout with current tunnel stats."""
     tunnel_url = server_url.replace("{code}", tunnel.code)
     lat = tunnel.latency
     lat_str = f"{lat:.0f}ms" if lat > 0 else "—"
@@ -54,19 +58,19 @@ def _render(tunnel: TunnelSession, server_url: str) -> Layout:
 
 
 class Dashboard:
+    """Live terminal dashboard showing tunnel status, stats, and latency."""
+
     def __init__(self, tunnel: TunnelSession, server_url: str):
         self.tunnel = tunnel
         self.server_url = server_url
         self.console = Console()
         self._running = False
 
-    def log(self, message: str):
-        pass
-
     async def refresh_loop(self):
+        """Continuously update the dashboard display until cancelled."""
         self._running = True
         try:
-            with Live(_render(self.tunnel, self.server_url), console=self.console, refresh_per_second=4, transient=True) as live:
+            with Live(_render(self.tunnel, self.server_url), console=self.console, refresh_per_second=2, transient=True) as live:
                 while self._running:
                     live.update(_render(self.tunnel, self.server_url))
                     await asyncio.sleep(1)
@@ -76,4 +80,5 @@ class Dashboard:
             self._running = False
 
     def stop(self):
+        """Signal the refresh loop to exit."""
         self._running = False

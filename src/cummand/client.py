@@ -1,13 +1,16 @@
+"""Tunnel client — connects to relay server and proxies HTTP requests."""
+
 import asyncio
 import logging
 import time
+from collections.abc import Callable
+from typing import Optional
 
 import aiohttp
 import websockets
 
 from cummand.config import CummandConfig
-from cummand.tunnel import TunnelSession
-from cummand.generator import generate_code
+from cummand.tunnel import MAX_MSG_SIZE, TunnelSession
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +22,7 @@ async def fetch_and_relay(
     tunnel: TunnelSession,
     msg: bytes,
 ) -> None:
+    """Receive a relayed HTTP request from the server, proxy it locally, and send back the response."""
     req_id = "unknown"
     path = "unknown"
     try:
@@ -52,6 +56,7 @@ async def relay_loop(
     tunnel: TunnelSession,
     session: aiohttp.ClientSession,
 ) -> None:
+    """Listen for incoming messages from the server and dispatch each as a relay task."""
     while True:
         try:
             msg = await ws.recv()
@@ -67,11 +72,12 @@ async def run_tunnel(
     server_url: str,
     local_port: int,
     config: CummandConfig,
-    on_code: callable = None,
-    on_log: callable = None,
-    on_tunnel_ready: callable = None,
+    on_code: Optional[Callable[[str], None]] = None,
+    on_log: Optional[Callable[[str], None]] = None,
+    on_tunnel_ready: Optional[Callable[[TunnelSession], None]] = None,
     auth_token: str = "",
 ) -> None:
+    """Connect to the relay server, authenticate, and enter the relay loop."""
     retries = config.defaults.retry_limit
     attempt = 0
 
@@ -81,7 +87,7 @@ async def run_tunnel(
         attempt += 1
         try:
             async with websockets.connect(
-                server_url, max_size=20 * 1024 * 1024
+                server_url, max_size=MAX_MSG_SIZE
             ) as ws:
                 code = (await ws.recv()).decode()
                 if on_code:
@@ -95,7 +101,6 @@ async def run_tunnel(
 
                 if on_log:
                     on_log(f"Tunnel established — code: {code}")
-                    print("")
 
                 tunnel = TunnelSession(
                     code=code,

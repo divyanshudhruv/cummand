@@ -1,3 +1,5 @@
+"""Configuration management — read, write, and validate TOML config files."""
+
 import tomllib
 import tomli_w
 from dataclasses import dataclass, field, asdict
@@ -9,7 +11,25 @@ CONFIG_FILENAME = "cummand.config.toml"
 GLOBAL_CONFIG_DIR = ".cummand"
 
 
+DEFAULT_FIELD_MAP: dict[str, str] = {
+    "server_url": "server_url",
+    "public_url": "public_url",
+    "auto_open": "auto-open",
+    "log_level": "log-level",
+    "retry_limit": "retry-limit",
+}
+
+
+def _get_field(d: dict, field: str) -> object:
+    """Read a field from a TOML dict, supporting snake_case and kebab-case keys."""
+    toml_key = DEFAULT_FIELD_MAP.get(field, field)
+    if toml_key in d:
+        return d[toml_key]
+    return d.get(field)
+
+
 def get_global_config_path() -> Path:
+    """Return the path to the global config file (~/.cummand/cummand.config.toml)."""
     return Path.home() / GLOBAL_CONFIG_DIR / CONFIG_FILENAME
 
 
@@ -53,7 +73,11 @@ class CummandConfig:
     aliases: dict[str, AliasConfig] = field(default_factory=dict)
 
 
-def find_config() -> Optional[Path]:
+def find_config(global_: bool = False) -> Optional[Path]:
+    """Locate the nearest config file (cwd first, then global fallback)."""
+    if global_:
+        path = get_global_config_path()
+        return path if path.exists() else None
     path = Path.cwd() / CONFIG_FILENAME
     if path.exists():
         return path
@@ -61,23 +85,26 @@ def find_config() -> Optional[Path]:
     return global_path if global_path.exists() else None
 
 
-def read_config(path: Optional[Path] = None) -> CummandConfig:
+def read_config(path: Optional[Path] = None, global_: bool = False) -> CummandConfig:
+    """Read and parse a TOML config file into a CummandConfig dataclass."""
     if path is None:
-        path = find_config()
+        path = find_config(global_=global_)
     cfg = CummandConfig()
     if path is None or not path.exists():
         return cfg
     raw = tomllib.loads(path.read_text(encoding="utf-8"))
     if "defaults" in raw:
-            d = raw["defaults"]
-            cfg.defaults.server_url = d.get("server_url", cfg.defaults.server_url)
-            cfg.defaults.public_url = d.get("public_url", cfg.defaults.public_url)
-            if "auto_open" in d:
-                cfg.defaults.auto_open = d["auto_open"]
-            elif "auto-open" in d:
-                cfg.defaults.auto_open = d["auto-open"]
-            cfg.defaults.log_level = d.get("log_level", cfg.defaults.log_level)
-            cfg.defaults.retry_limit = d.get("retry_limit", cfg.defaults.retry_limit)
+        d = raw["defaults"]
+        for py_field in ("server_url", "public_url", "log_level"):
+            val = _get_field(d, py_field)
+            if val is not None:
+                setattr(cfg.defaults, py_field, val)
+        auto = _get_field(d, "auto_open")
+        if isinstance(auto, bool):
+            cfg.defaults.auto_open = auto
+        retry = _get_field(d, "retry_limit")
+        if retry is not None:
+            cfg.defaults.retry_limit = int(retry)
     if "auth" in raw:
         cfg.auth.token = raw["auth"].get("token", "")
     if "alias" in raw:
@@ -89,12 +116,25 @@ def read_config(path: Optional[Path] = None) -> CummandConfig:
     return cfg
 
 
-def write_config(cfg: CummandConfig, path: Optional[Path] = None) -> Path:
-    if path is None:
-        path = Path.cwd() / CONFIG_FILENAME
+def _resolve_path(path: Optional[Path], global_: bool = False) -> Path:
+    """Return the config path — cwd by default, global if requested."""
+    if path:
+        return path
+    return get_global_config_path() if global_ else Path.cwd() / CONFIG_FILENAME
+
+
+def write_config(cfg: CummandConfig, path: Optional[Path] = None, global_: bool = False) -> Path:
+    """Write a CummandConfig to a TOML config file."""
+    path = _resolve_path(path, global_)
     data: dict = {}
     if cfg.defaults != DefaultsConfig():
-        data["defaults"] = asdict(cfg.defaults)
+        defaults_dict = {}
+        for py_field in DEFAULT_FIELD_MAP:
+            val = getattr(cfg.defaults, py_field)
+            if val != getattr(DefaultsConfig(), py_field):
+                defaults_dict[DEFAULT_FIELD_MAP[py_field]] = val
+        if defaults_dict:
+            data["defaults"] = defaults_dict
     if cfg.auth.token:
         data["auth"] = asdict(cfg.auth)
     if cfg.aliases:
@@ -105,22 +145,25 @@ def write_config(cfg: CummandConfig, path: Optional[Path] = None) -> Path:
     return path
 
 
-def add_alias(name: str, url: str, description: str = "", path: Optional[Path] = None) -> CummandConfig:
-    cfg = read_config(path)
+def add_alias(name: str, url: str, description: str = "", path: Optional[Path] = None, global_: bool = False) -> CummandConfig:
+    """Add a new alias profile to the config file."""
+    cfg = read_config(path, global_=global_)
     cfg.aliases[name] = AliasConfig(url=url, description=description)
-    write_config(cfg, path)
+    write_config(cfg, path, global_=global_)
     return cfg
 
 
-def remove_alias(name: str, path: Optional[Path] = None) -> CummandConfig:
-    cfg = read_config(path)
+def remove_alias(name: str, path: Optional[Path] = None, global_: bool = False) -> CummandConfig:
+    """Remove an alias profile from the config file."""
+    cfg = read_config(path, global_=global_)
     cfg.aliases.pop(name, None)
-    write_config(cfg, path)
+    write_config(cfg, path, global_=global_)
     return cfg
 
 
-def set_option(key: str, value: str, path: Optional[Path] = None) -> CummandConfig:
-    cfg = read_config(path)
+def set_option(key: str, value: str, path: Optional[Path] = None, global_: bool = False) -> CummandConfig:
+    """Set a single config option (auth-token, log-level, auto-open, retry-limit)."""
+    cfg = read_config(path, global_=global_)
     if key == "auth-token":
         cfg.auth.token = value
     elif key == "log-level":
@@ -131,11 +174,12 @@ def set_option(key: str, value: str, path: Optional[Path] = None) -> CummandConf
         cfg.defaults.retry_limit = int(value)
     else:
         raise ValueError(f"Unknown option: {key}")
-    write_config(cfg, path)
+    write_config(cfg, path, global_=global_)
     return cfg
 
 
 def init_config(path: Optional[Path] = None, global_: bool = False) -> Path:
+    """Create a default config file at the specified path."""
     if path is None:
         path = get_global_config_path() if global_ else Path.cwd() / CONFIG_FILENAME
     if global_:

@@ -1,9 +1,22 @@
 [project]
 name = "cummand"
-version = "0.2.0"
+version = "0.3.0"
 description = "A lightweight CLI tool that securely tunnels your local development servers to the public internet using custom, memorable aliases."
 readme = "README.md"
 requires-python = ">=3.11"
+keywords = ["tunnel", "ngrok", "cli", "http", "websocket", "development"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: Proxy Servers",
+    "Topic :: Software Development :: Testing",
+]
 dependencies = [
     "typer>=0.9.0",
     "websockets>=12.0",
@@ -12,8 +25,16 @@ dependencies = [
     "tomli-w>=1.0.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/divyanshudhruv/cummand"
+Repository = "https://github.com/divyanshudhruv/cummand"
+Issues = "https://github.com/divyanshudhruv/cummand/issues"
+
 [project.scripts]
 cummand = "cummand.__main__:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
 
 [build-system]
 requires = ["setuptools>=68.0"]
@@ -24,3 +45,8 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 cummand = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]

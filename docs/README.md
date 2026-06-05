@@ -2,10 +2,12 @@
 
 - [CLI Reference](cli.md) — all commands and options
 - [Configuration](configuration.md) — config file reference
+- [Changelog](../CHANGELOG.md) — version history
+- [Contributing](../CONTRIBUTING.md) — development guide
 
 ## Installation
 
-### Usage (remove dev files)
+### Usage (production)
 ```bash
 bash scripts/install.sh
 ```
@@ -20,10 +22,44 @@ make dev
 
 ## Overview
 
-`cummand` is open-source ngrok alternative. It works in two parts:
+`cummand` is an open-source ngrok alternative. It works in two parts:
 
 1. **Server** — a public relay server that accepts HTTP connections and forwards them through WebSocket tunnels
 2. **Client** — runs on your dev machine, connects to the server, and relays requests to your local server
+
+## Quick Start
+
+Choose the mode that fits your workflow:
+
+### Single-Terminal Mode (local development, recommended)
+
+Runs the relay server and tunnel client **in one process**. Your local app is tunneled automatically.
+
+```bash
+cummand serve --tunnel http://localhost:3000
+```
+
+That's it — one command, one terminal. The server listens on `:8080` and the client connects to it immediately.
+
+### Two-Terminal Mode (self-hosting)
+
+Server and client run in separate terminals. Use this when you want to keep the server running while restarting the client, or when they're on different machines.
+
+```bash
+# Terminal 1: start the relay server
+cummand serve
+
+# Terminal 2: start the tunnel client
+cummand start http://localhost:3000
+```
+
+### Connect to an Existing Relay
+
+If someone else is running the server (or it's deployed on Render), connect to it directly:
+
+```bash
+cummand start http://localhost:3000 --server wss://relay.example.com
+```
 
 ## Dashboard
 
@@ -63,13 +99,19 @@ https://server.com/crimson-swift-falcon-river/api/users
 
 See [Deploy to Render](../README.md#self-hosting-deploy-to-render) in the main README.
 
-## Makefile
+## Makefile (Unix/macOS/WSL)
 
-| Target    | Description                        |
-| --------- | ---------------------------------- |
-| `install` | Production install                 |
-| `dev`     | Editable install for development   |
-| `clean`   | Remove dev files (public/, tests/) |
+| Target    | Description                                      |
+| --------- | ------------------------------------------------ |
+| `install` | Production install                               |
+| `dev`     | Editable install for development                 |
+| `test`    | Run the test suite                               |
+| `clean`   | Remove build artifacts (egg-info, __pycache__)   |
+
+On Windows, run the commands directly:
+- `pip install -e .`
+- `pip install -e ".[dev]"`
+- `python -m pytest tests/ -v`
 
 ## Code Words
 
