@@ -113,3 +113,5 @@ The server also reads these environment variables automatically:
 | --------------------- | ----------------- |
 | `PORT`                | `--port` default  |
 | `CUMMAND_AUTH_TOKEN`  | `--auth-token` default |
+
+**Health check:** The server exposes `GET /health` returning `200 OK` with tunnel count. Use this for Render/platform health checks.

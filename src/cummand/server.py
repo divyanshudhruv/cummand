@@ -139,6 +139,10 @@ async def root_handler(request: web.Request) -> web.WebSocketResponse | web.Resp
     return await handle_http(request)
 
 
+async def health(request: web.Request) -> web.Response:
+    return web.Response(text=f"cummand server {len(tunnels)} tunnels", status=200)
+
+
 async def run_server(port: int = 8080, auth_token: str = "") -> None:
     global server_auth_token
     server_auth_token = auth_token
@@ -146,6 +150,8 @@ async def run_server(port: int = 8080, auth_token: str = "") -> None:
     logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
 
     app = web.Application()
+    app.router.add_get("/health", health)
+    app.router.add_route("*", "/", root_handler)
     app.router.add_route("*", "/{tail:.*}", root_handler)
     runner = web.AppRunner(app)
     await runner.setup()

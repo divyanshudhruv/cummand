@@ -181,11 +181,46 @@ https://server.com/crimson-swift-falcon-river      → localhost:3000/
 https://server.com/crimson-swift-falcon-river/about → localhost:3000/about
 ```
 
-## Development
+## Self-Hosting (Deploy to Render)
+
+Deploy your own relay server for production:
+
+1. Push your repo to GitHub
+2. On [Render](https://render.com) → **New Web Service** → connect your repo
+3. Fill:
+
+   | Field            | Value                            |
+   | ---------------- | -------------------------------- |
+   | Build Command    | `pip install -e .`               |
+   | Start Command    | `cummand server start`           |
+   | Plan             | Free or paid                     |
+
+4. Add **Environment Variables**:
+
+   | Key                  | Value                  |
+   | -------------------- | ---------------------- |
+   | `CUMMAND_AUTH_TOKEN` | `your-secret-token`    |
+   | (`PORT` auto-set)    | `8080`                 |
+
+5. Deploy → you get `https://your-app.onrender.com`
+
+6. Update local config:
 
 ```bash
-# Install
-uv sync
+cummand config set --server wss://your-app.onrender.com
+cummand config set --public-url https://your-app.onrender.com/{code}
+cummand config set --auth-token your-secret-token
+```
+
+The server exposes a `/health` endpoint for Render health checks.
+
+## Development Setup 
+
+```bash
+# Install (editable)
+pip install -e .
+# or: uv sync
+# or: make dev
 
 # Terminal 1: start relay server
 cummand server start
@@ -195,3 +230,11 @@ cummand start http://localhost:3000
 
 # The dashboard shows live tunnel stats (uptime, requests, data, latency)
 ```
+
+Available `make` targets:
+
+| Target    | Description                        |
+| --------- | ---------------------------------- |
+| `install` | Production install via pip         |
+| `dev`     | Editable install for development   |
+| `clean`   | Remove dev files (public/, tests/) |

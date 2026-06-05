@@ -59,6 +59,18 @@ https://server.com/crimson-swift-falcon-river/about
 https://server.com/crimson-swift-falcon-river/api/users
 ```
 
+## Self-Hosting on Render
+
+See [Deploy to Render](../README.md#self-hosting-deploy-to-render) in the main README.
+
+## Makefile
+
+| Target    | Description                        |
+| --------- | ---------------------------------- |
+| `install` | Production install                 |
+| `dev`     | Editable install for development   |
+| `clean`   | Remove dev files (public/, tests/) |
+
 ## Code Words
 
 Each tunnel gets a unique 4-word code in the format `color-adjective-animal-noun`:
