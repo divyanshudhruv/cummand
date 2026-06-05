@@ -1,6 +1,38 @@
-# Cummand 🔗
+<img width="1000" height="320" alt="Group 2379 (1)" src="https://github.com/user-attachments/assets/9810b3f5-3d28-4ae1-85b0-da08e38ef4db" />
 
-A lightweight CLI tool that securely tunnels your local development servers to the public internet using custom, memorable aliases.
+<p align="center">  
+A lightweight CLI tool that securely <code>tunnels</code> your local development servers to the public <code>internet</code> using custom, memorable <code>aliases</code>.
+<br><br>
+<img src="https://gitviews.com/repo/divyanshudhruv/cummand.svg"/>
+</p>
+<br>
+
+> [!IMPORTANT]\
+> The public `cummand` relay server requires a route password for access and is `not` currently available for global/unauthenticated deployment. To use `cummand`, you must run your own relay server `locally` or on your own `infrastructure`. See the docs for `self-hosting` instructions.
+
+<br>
+
+## Installation
+
+```bash
+
+
+# Install it from source
+git clone https://github.com/yourusername/cummand.git
+cd cummand
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Or with uv (faster)
+uv sync
+
+# Install in editable mode
+pip install -e .
+
+# Or with uv (faster):
+uv pip install -e .
+```
 
 ## Quick Start
 
@@ -10,14 +42,6 @@ cummand start http://localhost:3000
 
 # Profile mode (uses saved config)
 cummand start --alias frontend
-```
-
-## Installation
-
-```bash
-pip install cummand   # (once published)
-# or from source:
-uv pip install -e .
 ```
 
 ## CLI Reference
