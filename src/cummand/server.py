@@ -47,6 +47,17 @@ async def handle_http(request: web.Request) -> web.Response:
 
     tunnel = tunnels.get(code)
     if not tunnel:
+        referer = request.headers.get("Referer", "")
+        if referer:
+            for code_candidate in tunnels:
+                if code_candidate in referer:
+                    tunnel = tunnels[code_candidate]
+                    remaining = request.path
+                    break
+        if not tunnel and len(tunnels) == 1:
+            tunnel = next(iter(tunnels.values()))
+            remaining = request.path
+    if not tunnel:
         return web.Response(text=f"Tunnel '{code}' not found. Is the tunnel active?", status=404)
 
     req_body = await request.read()
