@@ -3,6 +3,7 @@ name = "cummand"
 version = "0.3.0"
 description = "A lightweight CLI tool that securely tunnels your local development servers to the public internet using custom, memorable aliases."
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.11"
 keywords = ["tunnel", "ngrok", "cli", "http", "websocket", "development"]
 classifiers = [
