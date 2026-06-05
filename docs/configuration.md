@@ -104,6 +104,6 @@ url = "http://localhost:8000"
 description = "Python FastAPI service"
 
 [alias.db-tunnel]
-url = "http://localhost:5432"
-description = "Postgres local interface"
+url = "http://localhost:3000"
+description = "Next.js dev server"
 ```

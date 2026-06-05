@@ -149,6 +149,8 @@ cummand config set <key> <value> [--global|-g]
 
 All config commands support `--global` / `-g` to target `~/.cummand/` instead of the local directory.
 
+Global options available on all commands: `--version` / `-V` to show version and exit.
+
 ## Configuration
 
 Create a `cummand.config.toml` in your project root:

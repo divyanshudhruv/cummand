@@ -25,6 +25,12 @@ cummand start [OPTIONS] [URL]
 | `--retry-limit`  | `-r`      | Max reconnection attempts (default: from config)    |
 | `--global`       | `-g`      | Use global config at `~/.cummand/`                  |
 
+Global options available on all commands:
+
+| Option      | Shorthand | Description                   |
+| ----------- | --------- | ----------------------------- |
+| `--version` | `-V`      | Show version and exit         |
+
 ### Examples
 
 ```bash
@@ -60,6 +66,7 @@ cummand serve [OPTIONS]
 | `--auth-token` |           | `""`    | Require auth token from clients                                |
 | `--tunnel`     | `-t`      | `None`  | Also tunnel this local URL in the same process (single terminal!) |
 | `--log-level`  | `-l`      | `info`  | Log level: `debug` or `info`                                   |
+| `--version`    | `-V`      |         | Show version and exit                                          |
 
 ### Single-Terminal Workflow (What It Is)
 

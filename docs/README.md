@@ -2,7 +2,6 @@
 
 - [CLI Reference](cli.md) — all commands and options
 - [Configuration](configuration.md) — config file reference
-- [Changelog](../CHANGELOG.md) — version history
 - [Contributing](../CONTRIBUTING.md) — development guide
 
 ## Installation

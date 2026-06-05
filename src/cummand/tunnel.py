@@ -39,5 +39,5 @@ class TunnelSession:
     def tunnel_url(self) -> str:
         return f"/{self.code}"
 
-    def record_request(self):
+    def record_request(self) -> None:
         self.request_count += 1
