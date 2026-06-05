@@ -21,3 +21,6 @@ Thumbs.db
 
 # Config
 cummand.config.toml
+
+# cCache
+.pytest_cache

@@ -82,14 +82,14 @@ Set configuration options.
 cummand config set [OPTIONS]
 ```
 
-| Option               | Description                                                 |
-| -------------------- | ----------------------------------------------------------- |
-| `--auth-token KEY`   | Set auth token for server authentication                    |
-| `--log-level LEVEL`  | Set log level (`debug` or `info`)                           |
-| `--auto-open BOOL`   | Auto-open browser on tunnel start (`true` or `false`)       |
-| `--retry-limit N`    | Set max reconnection attempts                               |
-| `--server URL`       | Set default relay server URL (WebSocket)                    |
-| `--public-url URL`   | Set public-facing URL (`{code}` replaced with tunnel code, e.g. `http://localhost:8080/{code}` or `https://myapp.onrender.com/{code}`) |
+| Option              | Description                                                                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `--auth-token KEY`  | Set auth token for server authentication                                                                                               |
+| `--log-level LEVEL` | Set log level (`debug` or `info`)                                                                                                      |
+| `--auto-open BOOL`  | Auto-open browser on tunnel start (`true` or `false`)                                                                                  |
+| `--retry-limit N`   | Set max reconnection attempts                                                                                                          |
+| `--server URL`      | Set default relay server URL (WebSocket)                                                                                               |
+| `--public-url URL`  | Set public-facing URL (`{code}` replaced with tunnel code, e.g. `http://localhost:8080/{code}` or `https://myapp.onrender.com/{code}`) |
 
 ---
 
@@ -101,8 +101,8 @@ Start the relay server.
 cummand server start [OPTIONS]
 ```
 
-| Option         | Shorthand | Default | Description                                  |
-| -------------- | --------- | ------- | -------------------------------------------- |
+| Option         | Shorthand | Default | Description                                                   |
+| -------------- | --------- | ------- | ------------------------------------------------------------- |
 | `--port`       | `-p`      | `8080`  | Port to listen on (HTTP + WebSocket both served on this port) |
-| `--auth-token` |           | `""`    | Required client auth token (empty = no auth) |
-| `--log-level`  | `-l`      | `info`  | Log level                                    |
+| `--auth-token` |           | `""`    | Required client auth token (empty = no auth)                  |
+| `--log-level`  | `-l`      | `info`  | Log level                                                     |

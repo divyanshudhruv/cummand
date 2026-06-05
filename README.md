@@ -1,4 +1,4 @@
-# cummand
+# Cummand 🔗
 
 A lightweight CLI tool that securely tunnels your local development servers to the public internet using custom, memorable aliases.
 
@@ -96,26 +96,30 @@ description = "Python FastAPI service"
 ## Architecture
 
 ```mermaid
-graph LR
-    subgraph Local ["Local Environment"]
-        Client[("cummand client<br/>(dev box)")]
+graph TB
+    subgraph User["User's Machine"]
+        A["Local Server<br/>localhost:3000"]
+        B["Cummand Client"]
     end
 
-    subgraph Render ["Public Cloud"]
-        Server[("cummand server<br/>(public)")]
+    subgraph External["Internet"]
+        C["Cummand Relay Server<br/>(Render)"]
+        D["Custom Domain<br/>api.yourproject.com"]
     end
 
-    subgraph World ["Public Internet"]
-        Users["Internet users"]
+    subgraph Visitor["End User"]
+        E["Browser"]
     end
 
-    Client <== "WebSocket<br/>tunnel relay" ==> Server
-    Server <-->|HTTP<br/>path-based routing| Users
-
-    %% Styling for a cleaner look
-    style Client fill:#f9f,stroke:#333,stroke-width:2px
-    style Server fill:#bbf,stroke:#333,stroke-width:2px
-    style Users fill:#dfd,stroke:#333,stroke-width:2px
+    B -- "1. WebSocket connect" --> C
+    C -- "2. Generate code<br/>(e.g., 'myproject')" --> B
+    E -- "3. GET api.yourproject.com/myproject" --> D
+    D -- "4. DNS CNAME" --> C
+    C -- "5. Forward request via WebSocket" --> B
+    B -- "6. Proxy to localhost:3000" --> A
+    A -- "7. Response" --> B
+    B -- "8. Response via WebSocket" --> C
+    C -- "9. HTTP response" --> E
 ```
 
 Each tunnel gets a unique 4-word code (e.g. `crimson-swift-falcon-river`). The server routes incoming requests by code prefix:
