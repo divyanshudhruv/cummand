@@ -1,7 +1,20 @@
 [project]
 name = "cummand"
 version = "0.1.0"
-description = "Add your description here"
+description = "Open-source ngrok alternative — expose local servers to the internet"
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = []
+requires-python = ">=3.11"
+dependencies = [
+   "typer",
+    "websockets",
+    "aiohttp",
+]
+
+[project.scripts]
+cummand = "cummand.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cummand = ["py.typed"]

@@ -1,0 +1,10 @@
+[tunnel]
+# The port where your Next.js application is running
+local_port = 3000
+
+# The subdomain you want to register (this acts as an identifier)
+subdomain = "my-dev"
+
+# Point to your local simulation server
+# Since you are running server.py on your machine, use localhost
+server_url = "ws://localhost:8765"
