@@ -21,18 +21,20 @@ Default settings used when no override is provided via CLI flags.
 
 ```toml
 [defaults]
-server_url = "ws://localhost:8765"
+server_url = "ws://localhost:8080"
+public_url = "http://{code}.localhost:8080"
 auto-open = true
 log-level = "info"
 retry-limit = 5
 ```
 
-| Field         | Type    | Default                 | Description                                |
-| ------------- | ------- | ----------------------- | ------------------------------------------ |
-| `server_url`  | string  | `"ws://localhost:8765"` | Default relay server URL                   |
-| `auto-open`   | bool    | `true`                  | Open tunnel URL in browser automatically   |
-| `log-level`   | string  | `"info"`                | `"info"` or `"debug"`                      |
-| `retry-limit` | integer | `5`                     | Max reconnection attempts before giving up |
+| Field         | Type    | Default                             | Description                                |
+| ------------- | ------- | ----------------------------------- | ------------------------------------------ |
+| `server_url`  | string  | `"ws://localhost:8080"`             | Default relay server URL                   |
+| `public_url`  | string  | `"http://{code}.localhost:8080"`    | Public URL template (`{code}` is replaced) |
+| `auto-open`   | bool    | `true`                              | Open tunnel URL in browser automatically   |
+| `log-level`   | string  | `"info"`                            | `"info"` or `"debug"`                      |
+| `retry-limit` | integer | `5`                                 | Max reconnection attempts before giving up |
 
 ### `[auth]`
 
@@ -71,6 +73,7 @@ description = "Python FastAPI service"
 ```toml
 [defaults]
 server_url = "wss://relay.example.com"
+public_url = "https://relay.example.com/{code}"
 auto-open = true
 log-level = "info"
 retry-limit = 5

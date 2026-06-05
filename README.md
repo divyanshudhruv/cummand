@@ -1,4 +1,4 @@
-<img width="1000" height="320" alt="Group 2379 (1)" src="https://github.com/user-attachments/assets/9810b3f5-3d28-4ae1-85b0-da08e38ef4db" />
+<img width="1000" height="320" alt="Group 2379 (1)" src="./public//assets//banner.png" />
 
 <p align="center">  
 A lightweight CLI tool that securely <code>tunnels</code> your local development servers to the public <code>internet</code> using custom, memorable <code>aliases</code>.
@@ -14,24 +14,44 @@ A lightweight CLI tool that securely <code>tunnels</code> your local development
 
 ## Installation
 
+> For **USAGE** (using the tool), run the install script below which removes non-required files (`public/`, `tests/`).
+
+> For **DEVELOPMENT** (contribute or modify), skip the script and install normally.
+
+### Usage (production)
+
 ```bash
-
-
-# Install it from source
 git clone https://github.com/yourusername/cummand.git
 cd cummand
 
-# Install dependencies
-pip install -r requirements.txt
+# Removes dev-only directories, then installs
+bash scripts/install.sh
 
-# Or with uv (faster)
-uv sync
+# Or manually:
+# rm -rf public tests
+# pip install -e .
+```
+
+### Development
+
+```bash
+git clone https://github.com/yourusername/cummand.git
+cd cummand
+
+# Create and activate virtual environment (recommended)
+python -m venv .venv
+
+# Windows:
+.venv\Scripts\activate
+
+# macOS/Linux:
+#source .venv/bin/activate
 
 # Install in editable mode
 pip install -e .
 
 # Or with uv (faster):
-uv pip install -e .
+uv sync
 ```
 
 ## Quick Start
@@ -88,11 +108,18 @@ cummand config set [--auth-token KEY] [--log-level LEVEL] [--auto-open BOOL] [--
 
 ### `cummand server start`
 
-Start the relay server.
+Start the relay server (HTTP + WebSocket on same port).
 
 ```bash
-cummand server start [--port PORT] [--ws-port PORT] [--auth-token TOKEN] [--log-level LEVEL]
+cummand server start [--port PORT] [--auth-token TOKEN] [--log-level LEVEL]
 ```
+
+Settings also read from environment variables:
+
+| Env Var              | Description                   |
+| -------------------- | ----------------------------- |
+| `PORT`               | Server port (default: `8080`) |
+| `CUMMAND_AUTH_TOKEN` | Auth token for clients        |
 
 ## Configuration
 
@@ -100,7 +127,8 @@ Create a `cummand.config.toml` in your project root:
 
 ```toml
 [defaults]
-server_url = "ws://localhost:8765"
+server_url = "ws://localhost:8080"
+public_url = "http://{code}.localhost:8080"
 auto-open = true
 log-level = "info"
 retry-limit = 5
@@ -156,7 +184,14 @@ https://server.com/crimson-swift-falcon-river/about → localhost:3000/about
 ## Development
 
 ```bash
-uv pip install -e .
-cummand server start    # start relay server
-cummand start http://localhost:3000  # start client tunnel
+# Install
+uv sync
+
+# Terminal 1: start relay server
+cummand server start
+
+# Terminal 2: start client tunnel
+cummand start http://localhost:3000
+
+# The dashboard shows live tunnel stats (uptime, requests, data, latency)
 ```

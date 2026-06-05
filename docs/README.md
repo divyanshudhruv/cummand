@@ -3,12 +3,40 @@
 - [CLI Reference](cli.md) — all commands and options
 - [Configuration](configuration.md) — config file reference
 
+## Installation
+
+### Usage (remove dev files)
+```bash
+bash scripts/install.sh
+```
+
+### Development
+```bash
+make dev
+# or: pip install -e .
+```
+
+---
+
 ## Overview
 
 `cummand` is open-source ngrok alternative. It works in two parts:
 
 1. **Server** — a public relay server that accepts HTTP connections and forwards them through WebSocket tunnels
 2. **Client** — runs on your dev machine, connects to the server, and relays requests to your local server
+
+## Dashboard
+
+When you run `cummand start`, a live terminal dashboard shows real-time tunnel stats:
+
+- **Status** — connection status (Online/Offline)
+- **Tunnel URL** — the public URL for your tunnel
+- **Uptime** — how long the tunnel has been active
+- **Requests** — total request count
+- **Data** — bytes sent through the tunnel
+- **Latency** — round-trip time
+
+The dashboard updates in-place (no screen flicker) using Rich's Live display.
 
 ## How It Works
 

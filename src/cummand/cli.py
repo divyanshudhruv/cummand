@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import webbrowser
 from pathlib import Path
 from typing import Optional
@@ -252,11 +253,11 @@ def config_set(
 
 @server_app.command("start")
 def server_start(
-    port: int = typer.Option(8080, "--port", "-p", help="Port to listen on"),
+    port: int = typer.Option(
+        int(os.environ.get("PORT", "8080")), "--port", "-p", help="Port to listen on"),
     auth_token: str = typer.Option(
-        "", "--auth-token", help="Required client auth token"),
-    log_level: str = typer.Option(
-        "info", "--log-level", "-l", help="Log level"),
+        os.environ.get("CUMMAND_AUTH_TOKEN", ""), "--auth-token", help="Auth token for clients"),
+    log_level: str = typer.Option("info", "--log-level", "-l", help="Log level"),
 ):
     """Start the relay server."""
     setup_logging(log_level)

@@ -106,3 +106,10 @@ cummand server start [OPTIONS]
 | `--port`       | `-p`      | `8080`  | Port to listen on (HTTP + WebSocket both served on this port) |
 | `--auth-token` |           | `""`    | Required client auth token (empty = no auth)                  |
 | `--log-level`  | `-l`      | `info`  | Log level                                                     |
+
+The server also reads these environment variables automatically:
+
+| Env Var               | Overrides         |
+| --------------------- | ----------------- |
+| `PORT`                | `--port` default  |
+| `CUMMAND_AUTH_TOKEN`  | `--auth-token` default |

@@ -154,3 +154,11 @@ async def run_server(port: int = 8080, auth_token: str = "") -> None:
     logger.info("Server listening on :%d (HTTP + WebSocket)", port)
 
     await asyncio.Future()
+
+
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 8080))
+    auth = os.environ.get("CUMMAND_AUTH_TOKEN", "")
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
+    asyncio.run(run_server(port, auth))

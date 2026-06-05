@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 async def fetch_and_relay(
-    ws: websockets.WebSocketClientProtocol,
+    ws: websockets.ClientConnection,
     session: aiohttp.ClientSession,
     local_port: int,
     tunnel: TunnelSession,
@@ -47,7 +47,7 @@ async def fetch_and_relay(
 
 
 async def relay_loop(
-    ws: websockets.WebSocketClientProtocol,
+    ws: websockets.ClientConnection,
     local_port: int,
     tunnel: TunnelSession,
     session: aiohttp.ClientSession,
@@ -118,3 +118,14 @@ async def run_tunnel(
                 if on_log:
                     on_log("Max retries reached. Giving up.")
                 raise
+
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+
+    # allow running from src/cummand/ without package install
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
+    from cummand.cli import app
+    app(["start"] + sys.argv[1:])
