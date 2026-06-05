@@ -71,7 +71,7 @@ cummand start --alias frontend
 Start a tunnel to expose a local server.
 
 ```bash
-cummand start [URL] [--alias NAME] [--server URL] [--log-level LEVEL] [--retry-limit N]
+cummand start [URL] [--alias NAME] [--server URL] [--auth-token KEY] [--log-level LEVEL] [--retry-limit N]
 ```
 
 **Ad-hoc mode:** Pass a URL directly.
@@ -88,18 +88,20 @@ cummand start --alias frontend
 
 **Options:**
 
-| Option                | Description                             |
-| --------------------- | --------------------------------------- |
-| `--alias`, `-a`       | Profile alias from config               |
-| `--server`, `-s`      | Relay server URL (default: from config) |
-| `--log-level`, `-l`   | `debug` or `info`                       |
-| `--retry-limit`, `-r` | Max reconnection attempts               |
+| Option                 | Description                             |
+| ---------------------- | --------------------------------------- |
+| `--alias`, `-a`        | Profile alias from config               |
+| `--server`, `-s`       | Relay server URL (default: from config) |
+| `--auth-token`         | Auth token for relay server             |
+| `--log-level`, `-l`    | `debug` or `info`                       |
+| `--retry-limit`, `-r`  | Max reconnection attempts               |
 
 ### `cummand config`
 
 Manage configuration profiles.
 
 ```bash
+cummand config init [--global]
 cummand config list
 cummand config add --alias NAME --url URL [--desc DESCRIPTION]
 cummand config remove --alias NAME

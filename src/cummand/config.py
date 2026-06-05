@@ -6,6 +6,24 @@ from typing import Optional
 
 
 CONFIG_FILENAME = "cummand.config.toml"
+GLOBAL_CONFIG_DIR = ".cummand"
+
+
+def get_global_config_path() -> Path:
+    return Path.home() / GLOBAL_CONFIG_DIR / CONFIG_FILENAME
+
+
+DEFAULT_CONFIG_CONTENT = """\
+[defaults]
+server_url = "ws://localhost:8080"
+public_url = "http://{code}.localhost:8080"
+auto-open = true
+log-level = "info"
+retry-limit = 5
+
+[auth]
+token = ""
+"""
 
 
 @dataclass
@@ -37,7 +55,10 @@ class CummandConfig:
 
 def find_config() -> Optional[Path]:
     path = Path.cwd() / CONFIG_FILENAME
-    return path if path.exists() else None
+    if path.exists():
+        return path
+    global_path = get_global_config_path()
+    return global_path if global_path.exists() else None
 
 
 def read_config(path: Optional[Path] = None) -> CummandConfig:
@@ -112,3 +133,12 @@ def set_option(key: str, value: str, path: Optional[Path] = None) -> CummandConf
         raise ValueError(f"Unknown option: {key}")
     write_config(cfg, path)
     return cfg
+
+
+def init_config(path: Optional[Path] = None, global_: bool = False) -> Path:
+    if path is None:
+        path = get_global_config_path() if global_ else Path.cwd() / CONFIG_FILENAME
+    if global_:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(DEFAULT_CONFIG_CONTENT, encoding="utf-8")
+    return path

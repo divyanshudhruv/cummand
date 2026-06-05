@@ -1,16 +1,30 @@
 # Configuration
 
-`cummand` uses a `cummand.config.toml` file in the **current working directory** (not a parent directory).
+`cummand` uses a `cummand.config.toml` file. It looks for one in two locations:
 
-## File Location
+1. **Current working directory** (highest priority)
+2. **Global fallback** at `~/.cummand/cummand.config.toml`
 
-The config file must be in the directory where you run the `cummand` command:
+## File Locations
+
+### Local config (per-project)
+
+Place it in your project root where you run `cummand`:
 
 ```bash
 my-project/
-├── cummand.config.toml    ← here
+├── cummand.config.toml    ← local config
 └── src/
     └── ...
+```
+
+### Global config (all projects)
+
+Install a global config that applies to all projects when no local config exists:
+
+```bash
+cummand config init --global
+# Creates ~/.cummand/cummand.config.toml
 ```
 
 ## Reference

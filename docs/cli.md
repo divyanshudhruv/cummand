@@ -16,12 +16,13 @@ cummand start [OPTIONS] [URL]
 
 ### Options
 
-| Option          | Shorthand | Description                                         |
-| --------------- | --------- | --------------------------------------------------- |
-| `--alias`       | `-a`      | Profile alias from config file                      |
-| `--server`      | `-s`      | Relay server URL (overrides config)                 |
-| `--log-level`   | `-l`      | Log level: `debug` or `info` (default: from config) |
-| `--retry-limit` | `-r`      | Max reconnection attempts (default: from config)    |
+| Option           | Shorthand | Description                                         |
+| ---------------- | --------- | --------------------------------------------------- |
+| `--alias`        | `-a`      | Profile alias from config file                      |
+| `--server`       | `-s`      | Relay server URL (overrides config)                 |
+| `--auth-token`   |           | Auth token for relay server (overrides config)      |
+| `--log-level`    | `-l`      | Log level: `debug` or `info` (default: from config) |
+| `--retry-limit`  | `-r`      | Max reconnection attempts (default: from config)    |
 
 ### Examples
 
@@ -43,6 +44,20 @@ cummand start http://localhost:3000 --server wss://relay.example.com --log-level
 Manage configuration profiles and settings.
 
 ### Commands
+
+#### `cummand config init`
+
+Create a default `cummand.config.toml` in the current directory.
+
+```bash
+cummand config init [--global]
+```
+
+| Option     | Shorthand | Description                                                       |
+| ---------- | --------- | ----------------------------------------------------------------- |
+| `--global` | `-g`      | Install in `~/.cummand/` for global use across all projects       |
+
+The global config at `~/.cummand/cummand.config.toml` is used automatically as a fallback when no local config exists.
 
 #### `cummand config list`
 

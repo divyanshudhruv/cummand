@@ -70,9 +70,12 @@ async def run_tunnel(
     on_code: callable = None,
     on_log: callable = None,
     on_tunnel_ready: callable = None,
+    auth_token: str = "",
 ) -> None:
     retries = config.defaults.retry_limit
     attempt = 0
+
+    token = auth_token or config.auth.token
 
     while attempt < retries:
         attempt += 1
@@ -84,8 +87,8 @@ async def run_tunnel(
                 if on_code:
                     on_code(code)
 
-                if config.auth.token:
-                    await ws.send(config.auth.token.encode())
+                if token:
+                    await ws.send(token.encode())
                     auth_resp = (await ws.recv()).decode()
                     if auth_resp != "OK":
                         raise ConnectionError(f"Auth failed: {auth_resp}")

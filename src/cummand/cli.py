@@ -15,8 +15,10 @@ from cummand.config import (
     add_alias,
     remove_alias,
     set_option,
+    init_config,
     CummandConfig,
     CONFIG_FILENAME,
+    GLOBAL_CONFIG_DIR,
 )
 from cummand.client import run_tunnel
 from cummand.server import run_server
@@ -48,6 +50,8 @@ def start(
         None, "--alias", "-a", help="Profile alias from config"),
     server_url: Optional[str] = typer.Option(
         None, "--server", "-s", help="Relay server URL"),
+    auth_token: Optional[str] = typer.Option(
+        None, "--auth-token", help="Auth token for relay server"),
     log_level: Optional[str] = typer.Option(
         None, "--log-level", "-l", help="Log level (debug|info)"),
     retry_limit: Optional[int] = typer.Option(
@@ -55,6 +59,9 @@ def start(
 ):
     """Start a tunnel to expose a local server."""
     cfg = read_config()
+
+    if auth_token:
+        cfg.auth.token = auth_token
 
     local_port: int = 0
     tunnel_url: str = ""
@@ -127,6 +134,7 @@ def start(
                 on_code=on_code,
                 on_log=on_log,
                 on_tunnel_ready=on_tunnel_ready,
+                auth_token=cfg.auth.token,
             )
 
         tunnel_task = asyncio.create_task(run_with_dashboard())
@@ -150,6 +158,19 @@ def start(
     except KeyboardInterrupt:
         console.print(
             "\n[black on red bold] TUNNEL CLOSED [/black on red bold]")
+
+
+@config_app.command("init")
+def config_init(
+    global_: bool = typer.Option(
+        False, "--global", "-g", help=f"Install in ~/{GLOBAL_CONFIG_DIR}/ for global use"),
+):
+    """Create a default cummand.config.toml."""
+    path = init_config(global_=global_)
+    console.print(f"[green]Default config created at: {path}[/green]")
+    if global_:
+        console.print(
+            "[dim]This config will be used as fallback when no local config exists.[/dim]")
 
 
 @config_app.command("list")
