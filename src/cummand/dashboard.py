@@ -1,17 +1,56 @@
 import asyncio
 import time
-from datetime import datetime
 from typing import Optional
 
-from rich.layout import Layout
-from rich.panel import Panel
-from rich.table import Table
-from rich.live import Live
 from rich.console import Console
 from rich.text import Text
-from rich import box
+from rich.style import Style
+from rich.live import Live
+from rich.layout import Layout
 
 from cummand.tunnel import TunnelSession
+
+
+def _fmt_bytes(n: int) -> str:
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024:
+            return f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TB"
+
+
+def _fmt_uptime(seconds: float) -> str:
+    h, rem = divmod(int(seconds), 3600)
+    m, s = divmod(rem, 60)
+    if h > 0:
+        return f"{h}h {m}m {s}s"
+    if m > 0:
+        return f"{m}m {s}s"
+    return f"{s}s"
+
+
+def _render(tunnel: TunnelSession, server_url: str) -> Layout:
+    tunnel_url = server_url.replace("{code}", tunnel.code)
+    lat = tunnel.latency
+    lat_str = f"{lat:.0f}ms" if lat > 0 else "—"
+    layout = Layout()
+    layout.split_column(
+        Layout(Text(f" TUNNEL INFO ", style=Style(
+            bgcolor="yellow", bold=True, color="black")), size=1),
+        Layout(Text.assemble(("Status     ", "white"),
+               ("● Online", "green")), size=1),
+        Layout(Text.assemble(("Tunnel URL ", "white"),
+               (tunnel_url, "dim white")), size=1),
+        Layout(Text.assemble(("Uptime     ", "white"),
+               (_fmt_uptime(tunnel.uptime), "dim white")), size=1),
+        Layout(Text.assemble(("Requests   ", "white"),
+               (str(tunnel.request_count), "dim white")), size=1),
+        Layout(Text.assemble(("Data       ", "white"),
+               (_fmt_bytes(tunnel.bytes_sent), "dim white")), size=1),
+        Layout(Text.assemble(("Latency    ", "white"),
+               (lat_str, "dim white")), size=1),
+    )
+    return layout
 
 
 class Dashboard:
@@ -19,64 +58,22 @@ class Dashboard:
         self.tunnel = tunnel
         self.server_url = server_url
         self.console = Console()
-        self.logs: list[str] = []
-        self._live: Optional[Live] = None
+        self._running = False
 
     def log(self, message: str):
-        ts = datetime.now().strftime("%H:%M:%S")
-        line = f"[{ts}] {message}"
-        self.logs.append(line)
-        if len(self.logs) > 100:
-            self.logs.pop(0)
-
-    def _build_status_table(self) -> Table:
-        t = Table(show_header=False, box=box.SIMPLE, padding=(0, 2))
-        t.add_column("Key", style="bold cyan", no_wrap=True)
-        t.add_column("Value", style="white")
-
-        status_text = Text("Online", style="bold green")
-        status_text.stylize("green")
-        tunnel_url = self.server_url.replace("{code}", self.tunnel.code)
-        t.add_row("Session Status", "● Online")
-        t.add_row("Tunnel URL", tunnel_url)
-        t.add_row("Local Target", f"http://localhost:{self.tunnel.local_port}")
-        lat_ms = self.tunnel.latency
-        lat_str = f"{lat_ms:.0f}ms" if lat_ms > 0 else "N/A"
-        t.add_row("Latency", lat_str)
-        t.add_row("Requests", str(self.tunnel.request_count))
-        return t
-
-    def _build_log_panel(self) -> Panel:
-        if not self.logs:
-            return Panel("Waiting for activity...", title="Logs", border_style="dim")
-        recent = "\n".join(self.logs[-15:])
-        return Panel(recent, title="Logs", border_style="dim")
-
-    def _build_layout(self) -> Layout:
-        layout = Layout()
-        layout.split_column(
-            Layout(name="status", size=12),
-            Layout(name="logs"),
-        )
-        layout["status"].update(
-            Panel(self._build_status_table(), title=f"Tunnel: {self.tunnel.code}",
-                  border_style="green", box=box.ROUNDED)
-        )
-        layout["logs"].update(self._build_log_panel())
-        return layout
+        pass
 
     async def refresh_loop(self):
+        self._running = True
         try:
-            with Live(self._build_layout(), console=self.console,
-                      refresh_per_second=2, screen=True) as live:
-                self._live = live
-                while True:
-                    live.update(self._build_layout())
-                    await asyncio.sleep(0.5)
-        except (asyncio.CancelledError, KeyboardInterrupt):
+            with Live(_render(self.tunnel, self.server_url), console=self.console, refresh_per_second=4, transient=True) as live:
+                while self._running:
+                    live.update(_render(self.tunnel, self.server_url))
+                    await asyncio.sleep(1)
+        except asyncio.CancelledError:
             pass
         finally:
-            self._live = None
+            self._running = False
 
     def stop(self):
-        pass
+        self._running = False

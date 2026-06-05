@@ -12,6 +12,7 @@ class TunnelSession:
     log_level: str = "info"
     start_time: float = field(default_factory=time.time)
     request_count: int = 0
+    bytes_sent: int = 0
     pending: dict[str, asyncio.Future] = field(default_factory=dict)
     _latency: float = 0.0
 

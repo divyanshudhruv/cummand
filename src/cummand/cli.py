@@ -41,11 +41,16 @@ def setup_logging(level: str = "info"):
 
 @app.command()
 def start(
-    url: Optional[str] = typer.Argument(None, help="Local URL to tunnel (ad-hoc mode)"),
-    alias: Optional[str] = typer.Option(None, "--alias", "-a", help="Profile alias from config"),
-    server_url: Optional[str] = typer.Option(None, "--server", "-s", help="Relay server URL"),
-    log_level: Optional[str] = typer.Option(None, "--log-level", "-l", help="Log level (debug|info)"),
-    retry_limit: Optional[int] = typer.Option(None, "--retry-limit", "-r", help="Max reconnection attempts"),
+    url: Optional[str] = typer.Argument(
+        None, help="Local URL to tunnel (ad-hoc mode)"),
+    alias: Optional[str] = typer.Option(
+        None, "--alias", "-a", help="Profile alias from config"),
+    server_url: Optional[str] = typer.Option(
+        None, "--server", "-s", help="Relay server URL"),
+    log_level: Optional[str] = typer.Option(
+        None, "--log-level", "-l", help="Log level (debug|info)"),
+    retry_limit: Optional[int] = typer.Option(
+        None, "--retry-limit", "-r", help="Max reconnection attempts"),
 ):
     """Start a tunnel to expose a local server."""
     cfg = read_config()
@@ -70,7 +75,8 @@ def start(
     if "://" in tunnel_url:
         import urllib.parse
         parsed = urllib.parse.urlparse(tunnel_url)
-        local_port = parsed.port or {"http": 80, "https": 443}.get(parsed.scheme, 3000)
+        local_port = parsed.port or {"http": 80,
+                                     "https": 443}.get(parsed.scheme, 3000)
     else:
         try:
             local_port = int(tunnel_url.strip("/"))
@@ -89,13 +95,15 @@ def start(
 
     code_container: list[str] = []
     dashboard: Optional[Dashboard] = None
+    tunnel_session = None
 
     def on_code(code: str):
         code_container.append(code)
         tunnel_url_public = cfg.defaults.public_url.replace("{code}", code)
         if cfg.defaults.auto_open:
             webbrowser.open(tunnel_url_public)
-            console.print(f"[green]Opening {tunnel_url_public} in browser...[/green]")
+            console.print(
+                f"[green]Opening {tunnel_url_public} in browser...[/green]")
 
     def on_log(msg: str):
         if dashboard:
@@ -103,36 +111,44 @@ def start(
         else:
             console.print(f"[dim]{msg}[/dim]")
 
+    def on_tunnel_ready(tunnel):
+        nonlocal tunnel_session
+        tunnel_session = tunnel
+
     async def entry():
-        nonlocal dashboard
-        tunnel = None
-        try:
+        nonlocal dashboard, tunnel_session
+
+        async def run_with_dashboard():
             await run_tunnel(
                 server_url=srv,
                 local_port=local_port,
                 config=cfg,
                 on_code=on_code,
                 on_log=on_log,
+                on_tunnel_ready=on_tunnel_ready,
             )
 
-            if code_container:
-                tunnel = type("Tunnel", (), {
-                    "code": code_container[0],
-                    "local_port": local_port,
-                    "latency": 0.0,
-                    "request_count": 0,
-                    "log_level": level,
-                })()
-                dashboard = Dashboard(tunnel, cfg.defaults.public_url)
-                await dashboard.refresh_loop()
+        tunnel_task = asyncio.create_task(run_with_dashboard())
+
+        while not tunnel_session:
+            await asyncio.sleep(0.05)
+
+        dashboard = Dashboard(tunnel_session, cfg.defaults.public_url)
+        dashboard_task = asyncio.create_task(dashboard.refresh_loop())
+
+        try:
+            await tunnel_task
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
             raise typer.Exit(1)
+        finally:
+            dashboard_task.cancel()
 
     try:
         asyncio.run(entry())
     except KeyboardInterrupt:
-        console.print("\n[yellow]Tunnel closed.[/yellow]")
+        console.print(
+            "\n[black on red bold] TUNNEL CLOSED [/black on red bold]")
 
 
 @config_app.command("list")
@@ -141,7 +157,8 @@ def config_list():
     cfg = read_config()
     if not cfg.aliases:
         console.print("[yellow]No aliases configured.[/yellow]")
-        console.print(f"Add one: cummand config add --alias <name> --url <url>")
+        console.print(
+            f"Add one: cummand config add --alias <name> --url <url>")
         return
 
     table = Table(title="Configured Aliases")
@@ -177,12 +194,18 @@ def config_remove(
 
 @config_app.command("set")
 def config_set(
-    auth_token: Optional[str] = typer.Option(None, "--auth-token", help="Set auth token"),
-    log_level: Optional[str] = typer.Option(None, "--log-level", help="Set log level (debug|info)"),
-    auto_open: Optional[str] = typer.Option(None, "--auto-open", help="Auto-open browser (true|false)"),
-    retry_limit: Optional[int] = typer.Option(None, "--retry-limit", help="Set retry limit"),
-    server_url: Optional[str] = typer.Option(None, "--server", help="Set relay server URL"),
-    public_url: Optional[str] = typer.Option(None, "--public-url", help="Set public-facing URL (e.g. http://localhost:8080)"),
+    auth_token: Optional[str] = typer.Option(
+        None, "--auth-token", help="Set auth token"),
+    log_level: Optional[str] = typer.Option(
+        None, "--log-level", help="Set log level (debug|info)"),
+    auto_open: Optional[str] = typer.Option(
+        None, "--auto-open", help="Auto-open browser (true|false)"),
+    retry_limit: Optional[int] = typer.Option(
+        None, "--retry-limit", help="Set retry limit"),
+    server_url: Optional[str] = typer.Option(
+        None, "--server", help="Set relay server URL"),
+    public_url: Optional[str] = typer.Option(
+        None, "--public-url", help="Set public-facing URL (e.g. http://localhost:8080)"),
 ):
     """Set configuration options."""
     set_count = 0
@@ -223,18 +246,22 @@ def config_set(
                 console.print(f"[red]{e}[/red]")
 
     if set_count == 0:
-        console.print("[yellow]No options provided. Use --help to see available options.[/yellow]")
+        console.print(
+            "[yellow]No options provided. Use --help to see available options.[/yellow]")
 
 
 @server_app.command("start")
 def server_start(
     port: int = typer.Option(8080, "--port", "-p", help="Port to listen on"),
-    auth_token: str = typer.Option("", "--auth-token", help="Required client auth token"),
-    log_level: str = typer.Option("info", "--log-level", "-l", help="Log level"),
+    auth_token: str = typer.Option(
+        "", "--auth-token", help="Required client auth token"),
+    log_level: str = typer.Option(
+        "info", "--log-level", "-l", help="Log level"),
 ):
     """Start the relay server."""
     setup_logging(log_level)
-    console.print(f"[green]Starting server on :{port} (HTTP + WebSocket)...[/green]")
+    console.print(
+        f"[green]Starting server on :{port} (HTTP + WebSocket)...[/green]")
     if auth_token:
         console.print("[yellow]Auth token required for clients.[/yellow]")
 

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 
 import aiohttp
 import websockets
@@ -15,6 +16,7 @@ async def fetch_and_relay(
     ws: websockets.WebSocketClientProtocol,
     session: aiohttp.ClientSession,
     local_port: int,
+    tunnel: TunnelSession,
     msg: bytes,
 ) -> None:
     req_id = "unknown"
@@ -23,11 +25,17 @@ async def fetch_and_relay(
         header_part, request_body = msg.split(b"|||", 1)
         req_id, method, path = header_part.decode().split(" ", 2)
         url = f"http://localhost:{local_port}{path}"
+        start = time.monotonic()
         async with session.request(method, url, data=request_body or None) as resp:
             data = await resp.read()
-            ctype = resp.headers.get("Content-Type", "application/octet-stream")
+            elapsed = time.monotonic() - start
+            ctype = resp.headers.get(
+                "Content-Type", "application/octet-stream")
             status = str(resp.status).encode()
             await ws.send(req_id.encode() + b"|||" + status + b"|||" + ctype.encode() + b"|||" + data)
+            tunnel.request_count += 1
+            tunnel.bytes_sent += len(data)
+            tunnel.latency = elapsed * 1000
     except Exception as e:
         logger.debug("Relay error on %s: %s", path, e)
         if req_id != "unknown":
@@ -41,12 +49,14 @@ async def fetch_and_relay(
 async def relay_loop(
     ws: websockets.WebSocketClientProtocol,
     local_port: int,
+    tunnel: TunnelSession,
     session: aiohttp.ClientSession,
 ) -> None:
     while True:
         try:
             msg = await ws.recv()
-            asyncio.create_task(fetch_and_relay(ws, session, local_port, msg))
+            asyncio.create_task(fetch_and_relay(
+                ws, session, local_port, tunnel, msg))
         except websockets.ConnectionClosed:
             break
         except Exception:
@@ -59,6 +69,7 @@ async def run_tunnel(
     config: CummandConfig,
     on_code: callable = None,
     on_log: callable = None,
+    on_tunnel_ready: callable = None,
 ) -> None:
     retries = config.defaults.retry_limit
     attempt = 0
@@ -81,6 +92,7 @@ async def run_tunnel(
 
                 if on_log:
                     on_log(f"Tunnel established — code: {code}")
+                    print("")
 
                 tunnel = TunnelSession(
                     code=code,
@@ -89,11 +101,15 @@ async def run_tunnel(
                     log_level=config.defaults.log_level,
                 )
 
+                if on_tunnel_ready:
+                    on_tunnel_ready(tunnel)
+
                 async with aiohttp.ClientSession() as session:
-                    await relay_loop(ws, local_port, session)
+                    await relay_loop(ws, local_port, tunnel, session)
                 break
         except (websockets.ConnectionClosed, ConnectionError, OSError) as e:
-            logger.warning("Connection attempt %d/%d failed: %s", attempt, retries, e)
+            logger.warning("Connection attempt %d/%d failed: %s",
+                           attempt, retries, e)
             if on_log:
                 on_log(f"Reconnecting ({attempt}/{retries})...")
             if attempt < retries:

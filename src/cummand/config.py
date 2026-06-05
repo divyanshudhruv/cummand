@@ -51,7 +51,10 @@ def read_config(path: Optional[Path] = None) -> CummandConfig:
             d = raw["defaults"]
             cfg.defaults.server_url = d.get("server_url", cfg.defaults.server_url)
             cfg.defaults.public_url = d.get("public_url", cfg.defaults.public_url)
-            cfg.defaults.auto_open = d.get("auto_open", cfg.defaults.auto_open)
+            if "auto_open" in d:
+                cfg.defaults.auto_open = d["auto_open"]
+            elif "auto-open" in d:
+                cfg.defaults.auto_open = d["auto-open"]
             cfg.defaults.log_level = d.get("log_level", cfg.defaults.log_level)
             cfg.defaults.retry_limit = d.get("retry_limit", cfg.defaults.retry_limit)
     if "auth" in raw:

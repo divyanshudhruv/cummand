@@ -89,7 +89,7 @@ cummand config set [OPTIONS]
 | `--auto-open BOOL`   | Auto-open browser on tunnel start (`true` or `false`)       |
 | `--retry-limit N`    | Set max reconnection attempts                               |
 | `--server URL`       | Set default relay server URL (WebSocket)                    |
-| `--public-url URL`   | Set public-facing URL (`{code}` replaced with tunnel code, e.g. `http://{code}.localhost:8080`) |
+| `--public-url URL`   | Set public-facing URL (`{code}` replaced with tunnel code, e.g. `http://localhost:8080/{code}` or `https://myapp.onrender.com/{code}`) |
 
 ---
 

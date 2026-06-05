@@ -47,7 +47,7 @@ async def handle_http(request: web.Request) -> web.Response:
 
     tunnel = tunnels.get(code)
     if not tunnel:
-        return web.Response(text="Tunnel not found", status=404)
+        return web.Response(text=f"Tunnel '{code}' not found. Is the tunnel active?", status=404)
 
     req_body = await request.read()
 
@@ -63,14 +63,15 @@ async def handle_http(request: web.Request) -> web.Response:
         status_code, header, body = raw_payload
 
         if header == b"ERROR":
-            return web.Response(text=f"Proxy Error: {body.decode('utf-8')}", status=502)
+            err_msg = body.decode("utf-8")
+            return web.Response(text=f"Proxy error: {err_msg}", status=502)
 
         ctype = header.decode("utf-8").split(";")[0].strip()
         return web.Response(body=body, content_type=ctype, status=status_code)
     except asyncio.TimeoutError:
-        return web.Response(text="Proxy Timeout", status=504)
+        return web.Response(text=f"Request timed out after 30s: {request.method} {remaining}", status=504)
     except Exception as e:
-        return web.Response(text=f"Proxy Error: {str(e)}", status=502)
+        return web.Response(text=f"Proxy error: {str(e)}", status=502)
     finally:
         tunnel.pending.pop(req_id, None)
 
@@ -92,11 +93,17 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
             if isinstance(token, bytes):
                 token = token.decode()
             if server_auth_token and token != server_auth_token:
+                logger.warning("Auth rejected for %s: invalid token", code)
                 await ws.send_bytes(b"ERROR: invalid token")
                 return ws
             await ws.send_bytes(b"OK")
-    except (asyncio.TimeoutError, ConnectionResetError):
-        pass
+    except asyncio.TimeoutError:
+        if server_auth_token:
+            logger.warning("Auth timeout for %s: no token received", code)
+            await ws.close()
+            return ws
+    except ConnectionResetError:
+        return ws
 
     tunnel = TunnelSession(code=code, local_port=0, ws=ws)
     tunnels[code] = tunnel
@@ -118,6 +125,7 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
                 break
     finally:
         tunnels.pop(code, None)
+        logger.info("Tunnel disconnected: %s", code)
         for fut in list(tunnel.pending.values()):
             if not fut.done():
                 fut.set_exception(Exception("Tunnel disconnected"))
@@ -134,6 +142,8 @@ async def root_handler(request: web.Request) -> web.WebSocketResponse | web.Resp
 async def run_server(port: int = 8080, auth_token: str = "") -> None:
     global server_auth_token
     server_auth_token = auth_token
+
+    logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
 
     app = web.Application()
     app.router.add_route("*", "/{tail:.*}", root_handler)
