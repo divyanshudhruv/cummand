@@ -1,6 +1,6 @@
 [project]
 name = "cummand"
-version = "0.3.0"
+version = "0.4.0"
 description = "A lightweight CLI tool that securely tunnels your local development servers to the public internet using custom, memorable aliases."
 readme = "README.md"
 license = {text = "MIT"}
