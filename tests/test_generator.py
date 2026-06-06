@@ -20,7 +20,7 @@ def test_generate_code_format():
         assert noun in NOUNS, f"Unknown noun: {noun}"
 
 
-def test_generate_code_unique():
+def test_generate_code_uniqueness():
     codes = {generate_code() for _ in range(1000)}
     assert len(codes) > 900, f"Too many duplicates: {len(codes)} unique out of 1000"
 

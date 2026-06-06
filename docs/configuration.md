@@ -35,8 +35,8 @@ Default settings used when no override is provided via CLI flags.
 
 ```toml
 [defaults]
-server_url = "ws://localhost:8080"
-public_url = "http://{code}.localhost:8080"
+server-url = "ws://localhost:8080"
+public-url = "http://{code}.localhost:8080"
 auto-open = true
 log-level = "info"
 retry-limit = 5
@@ -44,8 +44,8 @@ retry-limit = 5
 
 | Field         | Type    | Default                             | Description                                |
 | ------------- | ------- | ----------------------------------- | ------------------------------------------ |
-| `server_url`  | string  | `"ws://localhost:8080"`             | Default relay server URL                   |
-| `public_url`  | string  | `"http://{code}.localhost:8080"`    | Public URL template (`{code}` is replaced) |
+| `server-url`  | string  | `"ws://localhost:8080"`             | Default relay server URL                   |
+| `public-url`  | string  | `"http://{code}.localhost:8080"`    | Public URL template — `{code}` is replaced with the tunnel's 4-word code (e.g. `crimson-swift-falcon-river`) |
 | `auto-open`   | bool    | `true`                              | Open tunnel URL in browser automatically   |
 | `log-level`   | string  | `"info"`                            | `"info"` or `"debug"`                      |
 | `retry-limit` | integer | `5`                                 | Max reconnection attempts before giving up |
@@ -82,12 +82,19 @@ description = "Python FastAPI service"
 | `url`         | string | Yes      | Local URL to tunnel  |
 | `description` | string | No       | Human-readable label |
 
+## Understanding `{code}`
+
+The `public-url` setting uses `{code}` as a placeholder. When a tunnel starts, it gets a unique 4-word code (like `crimson-swift-falcon-river`). The `{code}` in the URL template is replaced with that code.
+
+- If `public-url = "http://{code}.localhost:8080"` and your code is `crimson-swift-falcon-river`, the tunnel URL becomes `http://crimson-swift-falcon-river.localhost:8080`
+- On a deployed server: `https://your-server.com/{code}` → `https://your-server.com/crimson-swift-falcon-river`
+
 ## Example: Full Config
 
 ```toml
 [defaults]
-server_url = "wss://relay.example.com"
-public_url = "https://relay.example.com/{code}"
+server-url = "wss://relay.example.com"
+public-url = "https://relay.example.com/{code}"
 auto-open = true
 log-level = "info"
 retry-limit = 5
@@ -104,6 +111,6 @@ url = "http://localhost:8000"
 description = "Python FastAPI service"
 
 [alias.db-tunnel]
-url = "http://localhost:5432"
-description = "Postgres local interface"
+url = "http://localhost:3000"
+description = "Next.js dev server"
 ```

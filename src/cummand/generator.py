@@ -1,3 +1,5 @@
+"""Memorable 4-word code generator for tunnel identification."""
+
 import random
 
 COLORS = [
@@ -74,6 +76,7 @@ NOUNS = [
 
 
 def generate_code() -> str:
+    """Generate a random 4-word code in the format color-adjective-animal-noun."""
     color = random.choice(COLORS)
     adj = random.choice(ADJECTIVES)
     animal = random.choice(ANIMALS)
@@ -82,6 +85,7 @@ def generate_code() -> str:
 
 
 def validate_code(code: str) -> bool:
+    """Check whether a code matches the expected 4-word format with known word lists."""
     parts = code.split("-")
     if len(parts) != 4:
         return False

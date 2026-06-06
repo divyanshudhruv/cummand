@@ -1,6 +1,0 @@
-typer>=0.9.0
-websockets>=12.0
-aiohttp>=3.9.0
-rich>=13.0.0
-tomli-w>=1.0.0
--e .

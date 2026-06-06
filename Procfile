@@ -1,1 +1,1 @@
-web: python -m cummand.server
+web: cummand serve

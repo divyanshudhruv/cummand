@@ -1,17 +1,16 @@
-# This is a sample configuration file for cummand.
-# It is not required to run cummand.
-# It is used to configure cummand.
-# Run `cummand --help` for more information.
+# Sample configuration for cummand.
+# Copy this to your project root and adjust as needed.
+# See `cummand --help` for more information.
 
 [defaults]
-server_url = "ws://localhost:8080"
-public_url = "http://{code}.localhost:8080"
+server-url = "ws://localhost:8080"
+public-url = "http://{code}.localhost:8080"
 auto-open = false
 log-level = "info"
 retry-limit = 5
 
 [auth]
-token = "mysecret123"
+token = ""
 
 [alias.frontend]
 url = "http://localhost:3000"

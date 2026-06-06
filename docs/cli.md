@@ -1,78 +1,134 @@
 # CLI Reference
 
-## cummand start
+## cummand tunnel
 
 Start a tunnel to expose a local server.
 
 ```bash
-cummand start [OPTIONS] [URL]
+cummand tunnel [OPTIONS] [URL]
 ```
 
 ### Arguments
 
 | Argument | Description                                                     |
 | -------- | --------------------------------------------------------------- |
-| `URL`    | Local URL to tunnel (ad-hoc mode), e.g. `http://localhost:3000` |
+| `URL`    | Local URL to tunnel, e.g. `http://localhost:3000` (ad-hoc mode) |
 
 ### Options
 
 | Option           | Shorthand | Description                                         |
 | ---------------- | --------- | --------------------------------------------------- |
-| `--alias`        | `-a`      | Profile alias from config file                      |
+| `--alias`        | `-a`      | Use a saved alias profile from config               |
 | `--server`       | `-s`      | Relay server URL (overrides config)                 |
 | `--auth-token`   |           | Auth token for relay server (overrides config)      |
 | `--log-level`    | `-l`      | Log level: `debug` or `info` (default: from config) |
 | `--retry-limit`  | `-r`      | Max reconnection attempts (default: from config)    |
+| `--global`       | `-g`      | Use global config at `~/.cummand/`                  |
+
+Global options available on all commands:
+
+| Option      | Shorthand | Description                   |
+| ----------- | --------- | ----------------------------- |
+| `--version` | `-V`      | Show version and exit         |
 
 ### Examples
 
 ```bash
-# Ad-hoc: tunnel a local dev server
-cummand start http://localhost:3000
+# Ad-hoc: tunnel a local dev server to a relay
+cummand tunnel http://localhost:3000
 
-# Profile: use a saved alias
-cummand start --alias frontend
+# Profile: use a saved alias from config
+cummand tunnel --alias frontend
 
-# With explicit server and debug logging
-cummand start http://localhost:3000 --server wss://relay.example.com --log-level debug
+# Connect to a specific relay server (not from config)
+cummand tunnel http://localhost:3000 --server wss://relay.example.com
+
+# Use global config and debug logging
+cummand tunnel --alias api --global --log-level debug
 ```
+
+---
+
+## cummand serve
+
+Start the relay server (HTTP + WebSocket on the same port).
+Can also start a tunnel client in the same process with `--tunnel`.
+
+```bash
+cummand serve [OPTIONS]
+```
+
+### Options
+
+| Option         | Shorthand | Default | Description                                                    |
+| -------------- | --------- | ------- | -------------------------------------------------------------- |
+| `--port`       | `-p`      | `8080`  | Port to listen on                                              |
+| `--auth-token` |           | `""`    | Require auth token from clients                                |
+| `--tunnel`     | `-t`      | `None`  | Also tunnel this local URL in the same process (single-terminal mode) |
+| `--log-level`  | `-l`      | `info`  | Log level: `debug` or `info`                                   |
+
+### Single-Terminal Workflow (What It Is)
+
+Normally, `cummand` needs two separate processes:
+1. A **relay server** that forwards HTTP requests via WebSocket (started with `cummand serve`)
+2. A **tunnel client** that connects your local server to the relay (started with `cummand tunnel`)
+
+This means two terminals: one for the server, one for the client.
+
+**Single-terminal mode** (`cummand serve --tunnel`) runs both in the same process using `asyncio.gather()`. The relay server handles inbound HTTP/WebSocket connections on its port, and the tunnel client simultaneously connects to that server and proxies your local app. You see logs from both in one terminal.
+
+```bash
+# One command — starts relay on :8080 AND tunnels localhost:3000
+cummand serve --tunnel http://localhost:3000
+```
+
+Use this for local development. Use two terminals when you need the server to keep running while restarting the client, or when server and client are on different machines.
+
+### Environment Variables
+
+| Env Var              | Overrides         |
+| -------------------- | ----------------- |
+| `PORT`               | `--port` default  |
+| `CUMMAND_AUTH_TOKEN` | `--auth-token` default |
+
+### Health Check
+
+The server exposes `GET /health` returning `200 OK` with the active tunnel count.
 
 ---
 
 ## cummand config
 
-Manage configuration profiles and settings.
+Manage configuration aliases and defaults.
 
-### Commands
+### `cummand config init`
 
-#### `cummand config init`
-
-Create a default `cummand.config.toml` in the current directory.
+Create a default `cummand.config.toml`.
 
 ```bash
-cummand config init [--global]
+cummand config init [--global|-g]
 ```
 
 | Option     | Shorthand | Description                                                       |
 | ---------- | --------- | ----------------------------------------------------------------- |
 | `--global` | `-g`      | Install in `~/.cummand/` for global use across all projects       |
 
-The global config at `~/.cummand/cummand.config.toml` is used automatically as a fallback when no local config exists.
+The global config at `~/.cummand/cummand.config.toml` is used as fallback when no local config exists.
 
-#### `cummand config list`
+### `cummand config list`
 
 List all configured aliases in a table.
 
 ```bash
-cummand config list
+cummand config list [--global|-g]
 ```
 
-#### `cummand config add`
+### `cummand config add`
 
 Add a new alias profile.
 
 ```bash
-cummand config add --alias NAME --url URL [--desc DESCRIPTION]
+cummand config add --alias NAME --url URL [--desc DESCRIPTION] [--global|-g]
 ```
 
 | Option    | Shorthand | Required | Description         |
@@ -80,53 +136,52 @@ cummand config add --alias NAME --url URL [--desc DESCRIPTION]
 | `--alias` | `-a`      | Yes      | Alias name          |
 | `--url`   | `-u`      | Yes      | Local URL to tunnel |
 | `--desc`  | `-d`      | No       | Description         |
+| `--global`| `-g`      | No       | Use global config   |
 
-#### `cummand config remove`
+### `cummand config remove`
 
 Remove an alias profile.
 
 ```bash
-cummand config remove --alias NAME
+cummand config remove --alias NAME [--global|-g]
 ```
 
-#### `cummand config set`
+### `cummand config set`
 
-Set configuration options.
+Set a single configuration option.
 
 ```bash
-cummand config set [OPTIONS]
+cummand config set <key> <value> [--global|-g]
 ```
 
-| Option              | Description                                                                                                                            |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `--auth-token KEY`  | Set auth token for server authentication                                                                                               |
-| `--log-level LEVEL` | Set log level (`debug` or `info`)                                                                                                      |
-| `--auto-open BOOL`  | Auto-open browser on tunnel start (`true` or `false`)                                                                                  |
-| `--retry-limit N`   | Set max reconnection attempts                                                                                                          |
-| `--server URL`      | Set default relay server URL (WebSocket)                                                                                               |
-| `--public-url URL`  | Set public-facing URL (`{code}` replaced with tunnel code, e.g. `http://localhost:8080/{code}` or `https://myapp.onrender.com/{code}`) |
+| Positional | Description                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------- |
+| `key`      | Config key: `auth-token`, `server-url`, `public-url`, `log-level`, `auto-open`, `retry-limit`                 |
+| `value`    | Config value (bool values: `true`/`false`, number values: integer strings)                                    |
+
+Examples:
+
+```bash
+cummand config set log-level debug
+cummand config set server-url wss://relay.example.com
+cummand config set auto-open false
+cummand config set retry-limit 10
+cummand config set auth-token sk_abc123
+cummand config set server-url wss://my-relay.com --global
+```
 
 ---
 
-## cummand server start
+## Global Config (`--global`, `-g`)
 
-Start the relay server.
+Every command that reads or writes config supports `--global` / `-g` to target
+`~/.cummand/cummand.config.toml` instead of the local `./cummand.config.toml`.
 
-```bash
-cummand server start [OPTIONS]
-```
-
-| Option         | Shorthand | Default | Description                                                   |
-| -------------- | --------- | ------- | ------------------------------------------------------------- |
-| `--port`       | `-p`      | `8080`  | Port to listen on (HTTP + WebSocket both served on this port) |
-| `--auth-token` |           | `""`    | Required client auth token (empty = no auth)                  |
-| `--log-level`  | `-l`      | `info`  | Log level                                                     |
-
-The server also reads these environment variables automatically:
-
-| Env Var               | Overrides         |
-| --------------------- | ----------------- |
-| `PORT`                | `--port` default  |
-| `CUMMAND_AUTH_TOKEN`  | `--auth-token` default |
-
-**Health check:** The server exposes `GET /health` returning `200 OK` with tunnel count. Use this for Render/platform health checks.
+| Command                     | `-g` Support |
+| --------------------------- | ------------ |
+| `cummand tunnel`             | Yes          |
+| `cummand config init`       | Yes          |
+| `cummand config list`       | Yes          |
+| `cummand config add`        | Yes          |
+| `cummand config remove`     | Yes          |
+| `cummand config set`        | Yes          |
