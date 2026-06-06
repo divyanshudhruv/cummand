@@ -27,7 +27,7 @@ server_auth_token: str = ""
 LOCALHOST_SUFFIXES = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
 
 
-def _extract_code_and_path(request: web.Request) -> tuple[str | None, str]:
+def _extract_code_and_path(request: web.Request) -> tuple[str, str]:
     """Extract the tunnel code and remaining path from a host header or URL path."""
     host = request.host
     path = request.path
