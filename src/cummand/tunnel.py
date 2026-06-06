@@ -3,6 +3,7 @@
 import asyncio
 import time
 from dataclasses import dataclass, field
+from typing import Any
 
 import websockets
 
@@ -15,7 +16,7 @@ class TunnelSession:
     """Holds the state and metrics for an active tunnel connection."""
     code: str
     local_port: int
-    ws: websockets.ClientConnection
+    ws: Any
     log_level: str = "info"
     start_time: float = field(default_factory=time.time)
     request_count: int = 0
