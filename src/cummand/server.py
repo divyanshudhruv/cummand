@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 # Workaround for Windows asyncio + aiohttp issue:
 # _ProactorBasePipeTransport._call_connection_lost is called unexpectedly
 # when a WebSocket is closed during cleanup on Windows.
+# TODO: revisit when upstream bug is resolved
 if sys.platform == "win32":
     from asyncio.proactor_events import _ProactorBasePipeTransport
     _ProactorBasePipeTransport._call_connection_lost = lambda self, *args: None
@@ -71,22 +72,22 @@ async def handle_http(request: web.Request) -> web.Response:
     req_body = await request.read()
 
     req_id = str(uuid.uuid4())
-    fut: asyncio.Future = asyncio.Future()
-    tunnel.pending[req_id] = fut
+    future: asyncio.Future = asyncio.Future()
+    tunnel.pending[req_id] = future
     tunnel.record_request()
 
     try:
         msg = f"{req_id} {request.method} {remaining}|||".encode() + req_body
         await tunnel.ws.send_bytes(msg)
-        raw_payload = await asyncio.wait_for(fut, timeout=30.0)
+        raw_payload = await asyncio.wait_for(future, timeout=30.0)
         status_code, header, body = raw_payload
 
         if header == b"ERROR":
             err_msg = body.decode("utf-8")
             return web.Response(text=f"Proxy error: {err_msg}", status=502)
 
-        ctype = header.decode("utf-8").split(";")[0].strip()
-        return web.Response(body=body, content_type=ctype, status=status_code)
+        content_type = header.decode("utf-8").split(";")[0].strip()
+        return web.Response(body=body, content_type=content_type, status=status_code)
     except asyncio.TimeoutError:
         return web.Response(text=f"Request timed out after 30s: {request.method} {remaining}", status=504)
     except Exception as e:

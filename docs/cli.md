@@ -1,11 +1,11 @@
 # CLI Reference
 
-## cummand start
+## cummand tunnel
 
 Start a tunnel to expose a local server.
 
 ```bash
-cummand start [OPTIONS] [URL]
+cummand tunnel [OPTIONS] [URL]
 ```
 
 ### Arguments
@@ -35,16 +35,16 @@ Global options available on all commands:
 
 ```bash
 # Ad-hoc: tunnel a local dev server to a relay
-cummand start http://localhost:3000
+cummand tunnel http://localhost:3000
 
 # Profile: use a saved alias from config
-cummand start --alias frontend
+cummand tunnel --alias frontend
 
 # Connect to a specific relay server (not from config)
-cummand start http://localhost:3000 --server wss://relay.example.com
+cummand tunnel http://localhost:3000 --server wss://relay.example.com
 
 # Use global config and debug logging
-cummand start --alias api --global --log-level debug
+cummand tunnel --alias api --global --log-level debug
 ```
 
 ---
@@ -64,15 +64,14 @@ cummand serve [OPTIONS]
 | -------------- | --------- | ------- | -------------------------------------------------------------- |
 | `--port`       | `-p`      | `8080`  | Port to listen on                                              |
 | `--auth-token` |           | `""`    | Require auth token from clients                                |
-| `--tunnel`     | `-t`      | `None`  | Also tunnel this local URL in the same process (single terminal!) |
+| `--tunnel`     | `-t`      | `None`  | Also tunnel this local URL in the same process (single-terminal mode) |
 | `--log-level`  | `-l`      | `info`  | Log level: `debug` or `info`                                   |
-| `--version`    | `-V`      |         | Show version and exit                                          |
 
 ### Single-Terminal Workflow (What It Is)
 
 Normally, `cummand` needs two separate processes:
 1. A **relay server** that forwards HTTP requests via WebSocket (started with `cummand serve`)
-2. A **tunnel client** that connects your local server to the relay (started with `cummand start`)
+2. A **tunnel client** that connects your local server to the relay (started with `cummand tunnel`)
 
 This means two terminals: one for the server, one for the client.
 
@@ -180,7 +179,7 @@ Every command that reads or writes config supports `--global` / `-g` to target
 
 | Command                     | `-g` Support |
 | --------------------------- | ------------ |
-| `cummand start`             | Yes          |
+| `cummand tunnel`             | Yes          |
 | `cummand config init`       | Yes          |
 | `cummand config list`       | Yes          |
 | `cummand config add`        | Yes          |

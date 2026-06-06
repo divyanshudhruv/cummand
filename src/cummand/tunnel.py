@@ -36,7 +36,7 @@ class TunnelSession:
         self._latency = value
 
     @property
-    def tunnel_url(self) -> str:
+    def tunnel_path(self) -> str:
         return f"/{self.code}"
 
     def record_request(self) -> None:

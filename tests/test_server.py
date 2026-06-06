@@ -58,7 +58,7 @@ def test_extract_code_no_code_in_path_or_host():
     assert remaining == ""
 
 
-def test_extract_code_no_host():
+def test_extract_code_from_empty_host():
     req = FakeRequest("", "/some-code")
     code, remaining = _extract_code_and_path(req)
     assert code == "some-code"

@@ -5,7 +5,7 @@ Thanks for your interest in cummand!
 ## Setup
 
 ```bash
-git clone https://github.com/yourusername/cummand.git
+git clone https://github.com/divyanshudhruv/cummand.git
 cd cummand
 python -m venv .venv
 source .venv/bin/activate  # or .venv\Scripts\activate on Windows
@@ -20,7 +20,7 @@ cummand serve --tunnel http://localhost:3000
 
 # Or two terminals:
 # Terminal 1: cummand serve
-# Terminal 2: cummand start http://localhost:3000
+# Terminal 2: cummand tunnel http://localhost:3000
 ```
 
 ## Tests

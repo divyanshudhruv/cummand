@@ -102,5 +102,5 @@ def test_get_field_returns_none_when_missing(tmp_path: Path):
 
 def test_get_field_uses_field_map(tmp_path: Path):
     from cummand.config import _get_field
-    d = {"server_url": "ws://example.com"}
+    d = {"server-url": "ws://example.com"}
     assert _get_field(d, "server_url") == "ws://example.com"

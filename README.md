@@ -21,21 +21,16 @@ A lightweight CLI tool that securely <code>tunnels</code> your local development
 ### Usage (production)
 
 ```bash
-git clone https://github.com/yourusername/cummand.git
+git clone https://github.com/divyanshudhruv/cummand.git
 cd cummand
 
-# Installs cummand (skips dev files)
 bash scripts/install.sh
-
-# Or manually:
-# pip install -e .
-# (optionally remove dev dirs: rm -rf public tests)
 ```
 
 ### Development
 
 ```bash
-git clone https://github.com/yourusername/cummand.git
+git clone https://github.com/divyanshudhruv/cummand.git
 cd cummand
 
 # Create and activate virtual environment (recommended)
@@ -77,7 +72,7 @@ Server and client in separate terminals. Useful when you want to restart the cli
 cummand serve
 
 # Terminal 2: tunnel client
-cummand start http://localhost:3000
+cummand tunnel http://localhost:3000
 ```
 
 ### Connect to an External Relay
@@ -85,23 +80,23 @@ cummand start http://localhost:3000
 If the server is deployed elsewhere (Render, VPS, etc.):
 
 ```bash
-cummand start http://localhost:3000 --server wss://relay.example.com
+cummand tunnel http://localhost:3000 --server wss://relay.example.com
 ```
 
 ### Profile Mode (saved alias from config)
 
 ```bash
-cummand start --alias frontend
+cummand tunnel --alias frontend
 ```
 
 ## CLI Reference
 
-### `cummand start`
+### `cummand tunnel`
 
 Start a tunnel to expose a local server.
 
 ```bash
-cummand start [URL] [--alias NAME] [--server URL] [--auth-token KEY] [--log-level LEVEL] [--retry-limit N] [--global]
+cummand tunnel [URL] [--alias NAME] [--server URL] [--auth-token KEY] [--log-level LEVEL] [--retry-limit N] [--global]
 ```
 
 | Option          | Shorthand | Description                         |
@@ -157,8 +152,8 @@ Create a `cummand.config.toml` in your project root:
 
 ```toml
 [defaults]
-server_url = "ws://localhost:8080"
-public_url = "http://{code}.localhost:8080"
+server-url = "ws://localhost:8080"
+public-url = "http://{code}.localhost:8080"
 auto-open = true
 log-level = "info"
 retry-limit = 5
@@ -257,7 +252,7 @@ cummand serve --tunnel http://localhost:3000
 
 # Or two terminals:
 # Terminal 1: cummand serve
-# Terminal 2: cummand start http://localhost:3000
+# Terminal 2: cummand tunnel http://localhost:3000
 
 # The dashboard shows live tunnel stats (uptime, requests, data, latency)
 ```

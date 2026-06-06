@@ -15,7 +15,6 @@ from rich.table import Table
 from cummand import __version__
 from cummand.config import (
     read_config,
-    write_config,
     add_alias,
     remove_alias,
     set_option,
@@ -68,7 +67,7 @@ def setup_logging(level: str = "info") -> None:
 
 
 @app.command()
-def start(
+def tunnel(
     url: Optional[str] = typer.Argument(
         None, help="Local URL to tunnel (e.g. http://localhost:3000)"),
     alias: Optional[str] = typer.Option(
@@ -76,7 +75,7 @@ def start(
     server_url: Optional[str] = typer.Option(
         None, "--server", "-s", help="Relay server URL (overrides config)"),
     auth_token: Optional[str] = typer.Option(
-        None, "--auth-token", help="Auth token for relay server"),
+        os.environ.get("CUMMAND_AUTH_TOKEN", None), "--auth-token", help="Auth token for relay server"),
     log_level: Optional[str] = typer.Option(
         None, "--log-level", "-l", help="Log level: debug | info"),
     retry_limit: Optional[int] = typer.Option(
@@ -90,7 +89,6 @@ def start(
     if auth_token:
         cfg.auth.token = auth_token
 
-    local_port: int = 0
     tunnel_url: str = ""
 
     if alias:
@@ -103,32 +101,23 @@ def start(
     elif url:
         tunnel_url = url
     else:
-        console.print("[red]Provide a URL or --alias.[/red]")
-        console.print("Usage: cummand start http://localhost:3000")
-        console.print("       cummand start --alias frontend")
+        console.print("[red]Provide a URL to tunnel or use --alias <name> to use a saved profile.[/red]")
+        console.print("Usage: cummand tunnel http://localhost:3000")
+        console.print("       cummand tunnel --alias frontend")
         raise typer.Exit(1)
 
-    if "://" in tunnel_url:
-        parsed = urllib.parse.urlparse(tunnel_url)
-        local_port = parsed.port or {"http": 80,
-                                     "https": 443}.get(parsed.scheme, 3000)
-    else:
-        try:
-            local_port = int(tunnel_url.strip("/"))
-        except ValueError:
-            console.print(f"[red]Invalid URL: {tunnel_url}[/red]")
-            raise typer.Exit(1)
+    local_port = _parse_port(tunnel_url)
 
     level = log_level or cfg.defaults.log_level
     setup_logging(level)
 
-    srv = server_url or cfg.defaults.server_url
+    resolved_server_url = server_url or cfg.defaults.server_url
     retries = retry_limit or cfg.defaults.retry_limit
 
     cfg.defaults.retry_limit = retries
     cfg.defaults.log_level = level
 
-    _run_client(cfg, local_port, srv)
+    _run_client(cfg, local_port, resolved_server_url)
 
 
 def _run_client(cfg: CummandConfig, local_port: int, server_url: str) -> None:
@@ -176,7 +165,7 @@ def _run_client(cfg: CummandConfig, local_port: int, server_url: str) -> None:
         try:
             await tunnel_task
         except Exception as e:
-            console.print(f"[red]Error: {e}[/red]")
+            console.print(f"[red]Tunnel error: {e}[/red]")
             raise typer.Exit(1)
         finally:
             dashboard_task.cancel()
@@ -207,17 +196,17 @@ def serve(
             console.print("[yellow]Auth token required for clients.[/yellow]")
 
         local_port = _parse_port(tunnel)
-        srv = f"ws://localhost:{port}"
+        server_url = f"ws://localhost:{port}"
 
         async def entry():
             cfg = CummandConfig()
-            cfg.defaults.server_url = srv
+            cfg.defaults.server_url = server_url
             cfg.defaults.public_url = f"http://localhost:{port}/{{code}}"
             cfg.auth.token = auth_token
 
             async def client():
                 await run_tunnel(
-                    server_url=srv,
+                    server_url=server_url,
                     local_port=local_port,
                     config=cfg,
                     on_log=lambda msg: console.print(f"[dim]{msg}[/dim]"),
@@ -279,7 +268,7 @@ def config_list(
     cfg = read_config(global_=global_)
     if not cfg.aliases:
         console.print("[yellow]No aliases configured.[/yellow]")
-        console.print(f"Add one: cummand config add --alias <name> --url <url>")
+        console.print("Add one: cummand config add --alias <name> --url <url>")
         return
 
     table = Table(title="Configured Aliases")
@@ -337,26 +326,6 @@ def config_set(
     if key not in known:
         console.print(f"[red]Unknown key: {key}. Allowed: {', '.join(sorted(known))}[/red]")
         raise typer.Exit(1)
-
-    if key == "server-url":
-        try:
-            cfg = read_config(global_=global_)
-            cfg.defaults.server_url = value
-            write_config(cfg, global_=global_)
-            console.print(f"[green]server-url set to: {value}[/green]")
-        except Exception as e:
-            console.print(f"[red]Error: {e}[/red]")
-        return
-
-    if key == "public-url":
-        try:
-            cfg = read_config(global_=global_)
-            cfg.defaults.public_url = value
-            write_config(cfg, global_=global_)
-            console.print(f"[green]public-url set to: {value}[/green]")
-        except Exception as e:
-            console.print(f"[red]Error: {e}[/red]")
-        return
 
     try:
         set_option(key, value, global_=global_)

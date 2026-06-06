@@ -49,7 +49,7 @@ Server and client run in separate terminals. Use this when you want to keep the 
 cummand serve
 
 # Terminal 2: start the tunnel client
-cummand start http://localhost:3000
+cummand tunnel http://localhost:3000
 ```
 
 ### Connect to an Existing Relay
@@ -57,12 +57,12 @@ cummand start http://localhost:3000
 If someone else is running the server (or it's deployed on Render), connect to it directly:
 
 ```bash
-cummand start http://localhost:3000 --server wss://relay.example.com
+cummand tunnel http://localhost:3000 --server wss://relay.example.com
 ```
 
 ## Dashboard
 
-When you run `cummand start`, a live terminal dashboard shows real-time tunnel stats:
+When you run `cummand tunnel`, a live terminal dashboard shows real-time tunnel stats:
 
 - **Status** — connection status (Online/Offline)
 - **Tunnel URL** — the public URL for your tunnel
@@ -75,7 +75,7 @@ The dashboard updates in-place (no screen flicker) using Rich's Live display.
 
 ## How It Works
 
-When you run `cummand start http://localhost:3000`:
+When you run `cummand tunnel http://localhost:3000`:
 
 1. The client connects to the relay server via WebSocket
 2. The server generates a unique 4-word code (e.g. `crimson-swift-falcon-river`)
@@ -122,3 +122,24 @@ Each tunnel gets a unique 4-word code in the format `color-adjective-animal-noun
 - **100 nouns** — river, forest, summit, valley, meadow, ...
 
 This gives **100 million unique combinations**.
+
+## Troubleshooting
+
+### Tunnel won't connect
+
+- **Is the relay server running?** Start it with `cummand serve` or check your server URL.
+- **Wrong server URL?** Verify `server-url` in config or pass `--server wss://your-server.com`.
+- **Auth token mismatch?** If the server requires a token, set `CUMMAND_AUTH_TOKEN` or pass `--auth-token`.
+- **Port conflict?** The default port is `8080`. Use `--port 9090` to change it.
+- **Firewall blocking?** Ensure the server port is open on your network.
+
+### Tunnel connects but requests fail
+
+- **Is your local app running?** The tunnel proxies to `localhost:<port>` — make sure your dev server is actually listening.
+- **Wrong local port?** Verify the URL you're tunneling matches your app's port.
+- **Check the logs:** Run with `--log-level debug` for detailed connection logs.
+
+### Config not found
+
+- `cummand` looks for `cummand.config.toml` in the current directory, then falls back to `~/.cummand/cummand.config.toml`.
+- Run `cummand config init` to create one, or `cummand config init --global` for a system-wide config.

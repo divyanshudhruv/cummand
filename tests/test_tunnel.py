@@ -31,7 +31,7 @@ def test_tunnel_request_count():
     assert sess.request_count == 3
 
 
-def test_tunnel_url():
+def test_tunnel_path():
     ws = FakeWS()
     sess = TunnelSession(code="crimson-swift-falcon-river", local_port=3000, ws=ws)
-    assert sess.tunnel_url == "/crimson-swift-falcon-river"
+    assert sess.tunnel_path == "/crimson-swift-falcon-river"

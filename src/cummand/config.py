@@ -12,8 +12,8 @@ GLOBAL_CONFIG_DIR = ".cummand"
 
 
 DEFAULT_FIELD_MAP: dict[str, str] = {
-    "server_url": "server_url",
-    "public_url": "public_url",
+    "server_url": "server-url",
+    "public_url": "public-url",
     "auto_open": "auto-open",
     "log_level": "log-level",
     "retry_limit": "retry-limit",
@@ -35,8 +35,8 @@ def get_global_config_path() -> Path:
 
 DEFAULT_CONFIG_CONTENT = """\
 [defaults]
-server_url = "ws://localhost:8080"
-public_url = "http://{code}.localhost:8080"
+server-url = "ws://localhost:8080"
+public-url = "http://{code}.localhost:8080"
 auto-open = true
 log-level = "info"
 retry-limit = 5
@@ -162,10 +162,14 @@ def remove_alias(name: str, path: Optional[Path] = None, global_: bool = False) 
 
 
 def set_option(key: str, value: str, path: Optional[Path] = None, global_: bool = False) -> CummandConfig:
-    """Set a single config option (auth-token, log-level, auto-open, retry-limit)."""
+    """Set a single config option."""
     cfg = read_config(path, global_=global_)
     if key == "auth-token":
         cfg.auth.token = value
+    elif key == "server-url":
+        cfg.defaults.server_url = value
+    elif key == "public-url":
+        cfg.defaults.public_url = value
     elif key == "log-level":
         cfg.defaults.log_level = value
     elif key == "auto-open":
