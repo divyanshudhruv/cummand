@@ -35,6 +35,15 @@ def get_global_config_path() -> Path:
 
 DEFAULT_CONFIG_CONTENT = """\
 [defaults]
+server-url = "wss://cummand.onrender.com"
+public-url = "https://cummand.onrender.com/{code}"
+auto-open = true
+log-level = "info"
+retry-limit = 5
+"""
+
+LOCAL_CONFIG_CONTENT = """\
+[defaults]
 server-url = "ws://localhost:8080"
 public-url = "http://{code}.localhost:8080"
 auto-open = true
@@ -189,5 +198,6 @@ def init_config(path: Optional[Path] = None, global_: bool = False) -> Path:
         path = get_global_config_path() if global_ else Path.cwd() / CONFIG_FILENAME
     if global_:
         path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(DEFAULT_CONFIG_CONTENT, encoding="utf-8")
+    content = DEFAULT_CONFIG_CONTENT if global_ else LOCAL_CONFIG_CONTENT
+    path.write_text(content, encoding="utf-8")
     return path

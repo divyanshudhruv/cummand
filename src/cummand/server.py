@@ -2,12 +2,16 @@
 
 import asyncio
 import logging
+import os
 import secrets
+import time
 import uuid
 import sys
+from collections import defaultdict
 
 from aiohttp import web
 
+from cummand import __version__
 from cummand.generator import generate_code
 from cummand.tunnel import MAX_MSG_SIZE, TunnelSession
 
@@ -24,7 +28,25 @@ if sys.platform == "win32":
 tunnels: dict[str, TunnelSession] = {}
 server_auth_token: str = ""
 
+# Rate limiting — tracks connection timestamps per IP
+_connection_counts: dict[str, list[float]] = defaultdict(list)
+MAX_TUNNELS = int(os.environ.get("CUMMAND_MAX_TUNNELS", "500"))
+RATE_LIMIT = int(os.environ.get("CUMMAND_RATE_LIMIT", "5"))
+RATE_WINDOW = int(os.environ.get("CUMMAND_RATE_WINDOW", "60"))
+
 LOCALHOST_SUFFIXES = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
+
+
+def _rate_limited(ip: str) -> bool:
+    """Check if an IP has exceeded the connection rate limit."""
+    now = time.time()
+    cutoff = now - RATE_WINDOW
+    timestamps = [t for t in _connection_counts[ip] if t > cutoff]
+    _connection_counts[ip] = timestamps
+    if len(timestamps) >= RATE_LIMIT:
+        return True
+    _connection_counts[ip].append(now)
+    return False
 
 
 def _extract_code_and_path(request: web.Request) -> tuple[str, str]:
@@ -98,6 +120,14 @@ async def handle_http(request: web.Request) -> web.Response:
 
 async def ws_handler(request: web.Request) -> web.WebSocketResponse:
     """Accept a WebSocket connection, assign a tunnel code, and relay messages."""
+    if len(tunnels) >= MAX_TUNNELS:
+        return web.Response(text="Server full", status=503)
+
+    peer = request.remote
+    if peer and _rate_limited(peer):
+        logger.warning("Rate limit exceeded for %s", peer)
+        return web.Response(text="Too many connections", status=429)
+
     ws = web.WebSocketResponse(max_msg_size=MAX_MSG_SIZE)
     await ws.prepare(request)
 
@@ -162,8 +192,12 @@ async def root_handler(request: web.Request) -> web.WebSocketResponse | web.Resp
 
 
 async def health(request: web.Request) -> web.Response:
-    """Health check endpoint returning tunnel count."""
-    return web.Response(text=f"cummand server {len(tunnels)} tunnels", status=200)
+    """Health check returning JSON with server status and version."""
+    return web.json_response({
+        "status": "ok",
+        "version": __version__,
+        "tunnels": len(tunnels),
+    })
 
 
 async def run_server(port: int = 8080, auth_token: str = "") -> None:

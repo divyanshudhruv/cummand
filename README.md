@@ -1,6 +1,6 @@
 <img width="1000" height="320" alt="Group 2379 (1)" src="./public/assets/banner.png" />
 
-<p align="center">  
+<p align="center">
 A lightweight CLI tool that securely <code>tunnels</code> your local development servers to the public <code>internet</code> using custom, memorable <code>aliases</code>.
 <br><br>
 <img src="https://gitviews.com/repo/divyanshudhruv/cummand.svg"/>
@@ -8,265 +8,162 @@ A lightweight CLI tool that securely <code>tunnels</code> your local development
 <br>
 
 > [!IMPORTANT]\
-> The public `cummand` relay server requires a route password for access and is `not` currently available for global/unauthenticated deployment. To use `cummand`, you must run your own relay server `locally` or on your own `infrastructure`. See the docs for `self-hosting` instructions.
+> The public `cummand` relay server at `cummand.onrender.com` is **free and open** for everyone. No auth token required — just use it. See [Quick Start](#quick-start) to get started in seconds.
 
 <br>
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [How It Works](#how-it-works)
+- [Development Setup](#development-setup)
+
+## Features
+
+- **Free public relay** — no account, no setup, no API key needed
+- **Tunnel any local server** — expose `localhost:3000`, `localhost:5173`, or any port
+- **Live dashboard** — real-time stats: requests, data, latency, uptime
+- **4-word codes** — each tunnel gets a unique `color-adjective-animal-noun` (100M combos)
+- **Custom aliases** — save frequently used tunnels as named profiles
+- **Self-hostable** — deploy your own relay server on Render, VPS, or any cloud
+- **Rate limited** — IP throttling and global tunnel cap prevent abuse
+
 ## Installation
 
-> For **USAGE** (using the tool), run the install script below.
-
-> For **DEVELOPMENT** (contribute or modify), install normally.
-
-### Usage (production)
+### Global Install (recommended)
 
 ```bash
 git clone https://github.com/divyanshudhruv/cummand.git
 cd cummand
-
-bash scripts/install.sh
+pip install .
 ```
+
+Create a global config so `--global` / `-g` works everywhere:
+
+```bash
+cummand config init --global
+```
+
+Now `cummand tunnel` from any directory automatically uses the public relay. The config lives at `~/.cummand/cummand.config.toml`.
 
 ### Development
 
-```bash
-git clone https://github.com/divyanshudhruv/cummand.git
-cd cummand
-
-# Create and activate virtual environment (recommended)
-python -m venv .venv
-
-# Windows:
-.venv\Scripts\activate
-
-# macOS/Linux:
-#source .venv/bin/activate
-
-# Install in editable mode
-pip install -e .
-
-# Or with uv (faster):
-uv sync
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Quick Start
 
-Choose the mode that fits your workflow:
-
-### Single-Terminal Mode (local development — recommended)
-
-Runs the relay server and tunnel client **in one process**. Your local app is tunneled automatically.
+After installing, expose your local dev server in one command:
 
 ```bash
-cummand serve --tunnel http://localhost:3000
-```
-
-That's it — one command, one terminal. Useful when you're developing locally and want everything running together.
-
-### Two-Terminal Mode (self-hosting)
-
-Server and client in separate terminals. Useful when you want to restart the client without stopping the server, or when they run on different machines.
-
-```bash
-# Terminal 1: relay server
-cummand serve
-
-# Terminal 2: tunnel client
 cummand tunnel http://localhost:3000
 ```
 
-### Connect to an External Relay
+Your terminal shows a live dashboard:
 
-If the server is deployed elsewhere (Render, VPS, etc.):
+| Field      | What it shows                                             |
+| ---------- | --------------------------------------------------------- |
+| Tunnel URL | `https://cummand.onrender.com/crimson-swift-falcon-river` |
+| Status     | Online / Offline                                          |
+| Requests   | Total request count                                       |
+| Data       | Bytes sent through the tunnel                             |
+| Latency    | Round-trip time in ms                                     |
+| Uptime     | How long the tunnel has been active                       |
 
-```bash
-cummand tunnel http://localhost:3000 --server wss://relay.example.com
-```
+Share the **Tunnel URL** with anyone — they'll see your local app.
 
-### Profile Mode (saved alias from config)
+To stop, press `Ctrl+C`.
 
-```bash
-cummand tunnel --alias frontend
-```
+### Commands Overview
 
-## CLI Reference
+| Command                                         | What it does                                  |
+| ----------------------------------------------- | --------------------------------------------- |
+| `cummand tunnel <url>`                          | Connect your local server to the public relay |
+| `cummand tunnel --alias <name>`                 | Use a saved alias from config                 |
+| `cummand serve`                                 | Start your own relay server (self-hosting)    |
+| `cummand serve --tunnel <url>`                  | Run relay server + tunnel in one terminal     |
+| `cummand config init --global`                  | Create a global config file                   |
+| `cummand config set <key> <value>`              | Change a config option                        |
+| `cummand config add --alias <name> --url <url>` | Save a tunnel alias                           |
 
-### `cummand tunnel`
+---
 
-Start a tunnel to expose a local server.
+For full details, see:
 
-```bash
-cummand tunnel [URL] [--alias NAME] [--server URL] [--auth-token KEY] [--log-level LEVEL] [--retry-limit N] [--global]
-```
+- **[CLI Reference](docs/cli.md)** — all commands, options, and examples
+- **[Configuration](docs/configuration.md)** — config file reference and advanced setup
+- **[Self-Hosting](docs/README.md#self-hosting)** — deploy your own relay server
 
-| Option          | Shorthand | Description                         |
-| --------------- | --------- | ----------------------------------- |
-| `--alias`       | `-a`      | Use a saved alias profile           |
-| `--server`      | `-s`      | Relay server URL (overrides config) |
-| `--auth-token`  |           | Auth token for relay server         |
-| `--log-level`   | `-l`      | `debug` or `info`                   |
-| `--retry-limit` | `-r`      | Max reconnection attempts           |
-| `--global`      | `-g`      | Use global config (`~/.cummand/`)   |
+## How It Works
 
-### `cummand serve`
-
-Start the relay server — optionally with a built-in tunnel.
-
-```bash
-cummand serve [--port PORT] [--auth-token TOKEN] [--tunnel URL] [--log-level LEVEL]
-```
-
-| Option         | Shorthand | Description                                    |
-| -------------- | --------- | ---------------------------------------------- |
-| `--port`       | `-p`      | Port to listen on (default: `8080`)            |
-| `--auth-token` |           | Require auth token from clients                |
-| `--tunnel`     | `-t`      | Also tunnel a local URL (single-terminal mode) |
-| `--log-level`  | `-l`      | Log level: `debug` or `info`                   |
-
-Settings also read from environment variables:
-
-| Env Var              | Description                   |
-| -------------------- | ----------------------------- |
-| `PORT`               | Server port (default: `8080`) |
-| `CUMMAND_AUTH_TOKEN` | Auth token for clients        |
-
-### `cummand config`
-
-Manage configuration profiles.
+1. You run `cummand tunnel http://localhost:3000` — client opens a WebSocket to the relay
+2. The server assigns a unique 4-word code like `crimson-swift-falcon-river`
+3. A visitor hits `https://cummand.onrender.com/crimson-swift-falcon-river`
+4. The server checks the **rate limiter** (max 5 WebSocket connects/min per IP, max 500 tunnels globally)
+5. If allowed, the relay forwards the HTTP request through the WebSocket tunnel
+6. Your local client proxies it to `localhost:3000` and sends the response back
 
 ```bash
-cummand config init [--global|-g]
-cummand config list [--global|-g]
-cummand config add --alias NAME --url URL [--desc DESC] [--global|-g]
-cummand config remove --alias NAME [--global|-g]
-cummand config set <key> <value> [--global|-g]
+https://cummand.onrender.com/crimson-swift-falcon-river      → localhost:3000/
+https://cummand.onrender.com/crimson-swift-falcon-river/about → localhost:3000/about
 ```
-
-All config commands support `--global` / `-g` to target `~/.cummand/` instead of the local directory.
-
-Global options available on all commands: `--version` / `-V` to show version and exit.
-
-## Configuration
-
-Create a `cummand.config.toml` in your project root:
-
-```toml
-[defaults]
-server-url = "ws://localhost:8080"
-public-url = "http://{code}.localhost:8080"
-auto-open = true
-log-level = "info"
-retry-limit = 5
-
-[auth]
-token = ""
-
-[alias.frontend]
-url = "http://localhost:3000"
-description = "Main Next.js app"
-
-[alias.backend]
-url = "http://localhost:8000"
-description = "Python FastAPI service"
-```
-
-## Architecture
 
 ```mermaid
 graph TB
-    subgraph User["User's Machine"]
-        A["Local Server<br/>localhost:3000"]
-        B["Cummand Client"]
+    subgraph Visitor["Visitor"]
+        V["Browser"]
     end
 
-    subgraph External["Internet"]
-        C["Cummand Relay Server<br/>(Render)"]
-        D["Custom Domain<br/>api.yourproject.com"]
+    subgraph Relay["Relay Server (cummand.onrender.com)"]
+        RL["Rate Limiter"]
+        WS["WebSocket Handler"]
+        H["HTTP Router"]
+        T[("Tunnels Pool")]
     end
 
-    subgraph Visitor["End User"]
-        E["Browser"]
+    subgraph Local["Your Machine"]
+        CLI["Cummand Client"]
+        DASH["Dashboard"]
+        APP["Local Server"]
     end
 
-    B -- "1. WebSocket connect" --> C
-    C -- "2. Generate code<br/>(e.g., 'myproject')" --> B
-    E -- "3. GET api.yourproject.com/myproject" --> D
-    D -- "4. DNS CNAME" --> C
-    C -- "5. Forward request via WebSocket" --> B
-    B -- "6. Proxy to localhost:3000" --> A
-    A -- "7. Response" --> B
-    B -- "8. Response via WebSocket" --> C
-    C -- "9. HTTP response" --> E
+    V -- "GET /code" --> H
+    H -- "rate check" --> RL
+    RL -- "allowed" --> WS
+    RL -- "429 Too Many" --> V
+    WS -- "lookup" --> T
+    WS -- "forward request" --> CLI
+    CLI -- "proxy to" --> APP
+    APP -- "response" --> CLI
+    CLI -- "relay back" --> WS
+    WS -- "HTTP response" --> V
+    CLI -.-> DASH
 ```
-
-Each tunnel gets a unique 4-word code (e.g. `crimson-swift-falcon-river`). The server routes incoming requests by code prefix:
-
-```bash
-https://server.com/crimson-swift-falcon-river      → localhost:3000/
-https://server.com/crimson-swift-falcon-river/about → localhost:3000/about
-```
-
-## Self-Hosting (Deploy to Render)
-
-Deploy your own relay server for production:
-
-1. Push your repo to GitHub
-2. On [Render](https://render.com) → **New Web Service** → connect your repo
-3. Fill:
-
-   | Field         | Value              |
-   | ------------- | ------------------ |
-   | Build Command | `pip install -e .` |
-   | Start Command | `cummand serve`    |
-   | Plan          | Free or paid       |
-
-4. Add **Environment Variables**:
-
-   | Key                  | Value               |
-   | -------------------- | ------------------- |
-   | `CUMMAND_AUTH_TOKEN` | `your-secret-token` |
-   | (`PORT` auto-set)    | `8080`              |
-
-5. Deploy → you get `https://your-app.onrender.com`
-
-6. Update local config:
-
-```bash
-cummand config set server-url wss://your-app.onrender.com
-cummand config set public-url https://your-app.onrender.com/{code}
-cummand config set auth-token your-secret-token
-```
-
-The server exposes a `/health` endpoint for Render health checks.
 
 ## Development Setup
 
 ```bash
-# Install (editable)
-pip install -e .
-# or: uv sync
-# or: make dev
+git clone https://github.com/divyanshudhruv/cummand.git
+cd cummand
 
-# Single terminal: relay server + tunnel client together
-cummand serve --tunnel http://localhost:3000
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
 
-# Or two terminals:
-# Terminal 1: cummand serve
-# Terminal 2: cummand tunnel http://localhost:3000
+pip install -e ".[dev]"
+```
 
-# The dashboard shows live tunnel stats (uptime, requests, data, latency)
+Then run tests:
+
+```bash
+python -m pytest tests/ -v
 ```
 
 Available `make` targets (Unix/macOS/WSL):
 
-| Target    | Description                                      |
-| --------- | ------------------------------------------------ |
-| `install` | Production install via pip                       |
-| `dev`     | Editable install for development                 |
-| `test`    | Run the test suite                               |
-| `clean`   | Remove build artifacts (egg-info, __pycache__)   |
-
-On Windows, run the commands directly:
-- `pip install -e .`
-- `pip install -e ".[dev]"`
-- `python -m pytest tests/ -v`
+| Target  | Description                    |
+| ------- | ------------------------------ |
+| `dev`   | Editable install with dev deps |
+| `test`  | Run test suite                 |
+| `clean` | Remove build artifacts         |

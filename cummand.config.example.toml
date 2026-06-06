@@ -1,16 +1,14 @@
 # Sample configuration for cummand.
-# Copy this to your project root and adjust as needed.
-# See `cummand --help` for more information.
+# After `cummand config init --global`, your global config at
+# ~/.cummand/cummand.config.toml already points to the public server.
+# This file shows additional options.
 
 [defaults]
-server-url = "ws://localhost:8080"
-public-url = "http://{code}.localhost:8080"
+server-url = "wss://cummand.onrender.com"
+public-url = "https://cummand.onrender.com/{code}"
 auto-open = false
 log-level = "info"
 retry-limit = 5
-
-[auth]
-token = ""
 
 [alias.frontend]
 url = "http://localhost:3000"

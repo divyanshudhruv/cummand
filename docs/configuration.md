@@ -35,20 +35,20 @@ Default settings used when no override is provided via CLI flags.
 
 ```toml
 [defaults]
-server-url = "ws://localhost:8080"
-public-url = "http://{code}.localhost:8080"
+server-url = "wss://cummand.onrender.com"
+public-url = "https://cummand.onrender.com/{code}"
 auto-open = true
 log-level = "info"
 retry-limit = 5
 ```
 
-| Field         | Type    | Default                             | Description                                |
-| ------------- | ------- | ----------------------------------- | ------------------------------------------ |
-| `server-url`  | string  | `"ws://localhost:8080"`             | Default relay server URL                   |
-| `public-url`  | string  | `"http://{code}.localhost:8080"`    | Public URL template — `{code}` is replaced with the tunnel's 4-word code (e.g. `crimson-swift-falcon-river`) |
-| `auto-open`   | bool    | `true`                              | Open tunnel URL in browser automatically   |
-| `log-level`   | string  | `"info"`                            | `"info"` or `"debug"`                      |
-| `retry-limit` | integer | `5`                                 | Max reconnection attempts before giving up |
+| Field         | Type    | Default                                 | Description                                                              |
+| ------------- | ------- | --------------------------------------- | ------------------------------------------------------------------------ |
+| `server-url`  | string  | `"wss://cummand.onrender.com"`          | Default relay server URL (public)                                        |
+| `public-url`  | string  | `"https://cummand.onrender.com/{code}"` | Public URL template — `{code}` is replaced with the tunnel's 4-word code |
+| `auto-open`   | bool    | `true`                                  | Open tunnel URL in browser automatically                                 |
+| `log-level`   | string  | `"info"`                                | `"info"` or `"debug"`                                                    |
+| `retry-limit` | integer | `5`                                     | Max reconnection attempts before giving up                               |
 
 ### `[auth]`
 
@@ -93,14 +93,11 @@ The `public-url` setting uses `{code}` as a placeholder. When a tunnel starts, i
 
 ```toml
 [defaults]
-server-url = "wss://relay.example.com"
-public-url = "https://relay.example.com/{code}"
+server-url = "wss://cummand.onrender.com"
+public-url = "https://cummand.onrender.com/{code}"
 auto-open = true
 log-level = "info"
 retry-limit = 5
-
-[auth]
-token = "sk_abc123..."
 
 [alias.frontend]
 url = "http://localhost:3000"
@@ -109,8 +106,4 @@ description = "Main Next.js app"
 [alias.backend]
 url = "http://localhost:8000"
 description = "Python FastAPI service"
-
-[alias.db-tunnel]
-url = "http://localhost:3000"
-description = "Next.js dev server"
 ```
