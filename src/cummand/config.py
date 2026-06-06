@@ -126,6 +126,7 @@ def _resolve_path(path: Optional[Path], global_: bool = False) -> Path:
 def write_config(cfg: CummandConfig, path: Optional[Path] = None, global_: bool = False) -> Path:
     """Write a CummandConfig to a TOML config file."""
     path = _resolve_path(path, global_)
+    path.parent.mkdir(parents=True, exist_ok=True)
     data: dict = {}
     if cfg.defaults != DefaultsConfig():
         defaults_dict = {}
