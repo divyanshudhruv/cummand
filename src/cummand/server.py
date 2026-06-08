@@ -8,6 +8,7 @@ import time
 import uuid
 import sys
 from collections import defaultdict
+from datetime import datetime, timezone
 
 from aiohttp import web
 
@@ -34,7 +35,117 @@ MAX_TUNNELS = int(os.environ.get("CUMMAND_MAX_TUNNELS", "500"))
 RATE_LIMIT = int(os.environ.get("CUMMAND_RATE_LIMIT", "5"))
 RATE_WINDOW = int(os.environ.get("CUMMAND_RATE_WINDOW", "60"))
 
+# Stats database
+db_pool = None
+ADMIN_TOKEN = os.environ.get("CUMMAND_ADMIN_TOKEN", "")
+
 LOCALHOST_SUFFIXES = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
+
+
+async def _get_db_pool():
+    global db_pool
+    if db_pool is None:
+        dsn = os.environ.get("CUMMAND_DATABASE_URL", "")
+        if dsn:
+            import asyncpg
+            db_pool = await asyncpg.create_pool(dsn, min_size=1, max_size=5)
+    return db_pool
+
+
+async def _ensure_stats_table(pool):
+    await pool.execute("""
+        CREATE TABLE IF NOT EXISTS tunnel_history (
+            id          SERIAL PRIMARY KEY,
+            code        VARCHAR(100) NOT NULL,
+            started_at  TIMESTAMPTZ NOT NULL,
+            ended_at    TIMESTAMPTZ NOT NULL,
+            duration_s  INT NOT NULL,
+            requests    INT NOT NULL,
+            bytes_sent  BIGINT NOT NULL,
+            latency_ms  FLOAT DEFAULT 0
+        )
+    """)
+
+
+def _check_admin(request) -> web.Response | None:
+    if not ADMIN_TOKEN:
+        return web.Response(text="Admin API not configured", status=401)
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer ") or auth[7:] != ADMIN_TOKEN:
+        return web.Response(text="Unauthorized", status=401)
+    return None
+
+
+async def handle_stats(request: web.Request) -> web.Response:
+    err = _check_admin(request)
+    if err:
+        return err
+
+    active = []
+    for code, tunnel in tunnels.items():
+        active.append({
+            "code": code,
+            "uptime_s": int(tunnel.uptime),
+            "requests": tunnel.request_count,
+            "bytes_sent": tunnel.bytes_sent,
+            "latency_ms": tunnel.latency,
+        })
+
+    summary = {
+        "active_count": len(active),
+        "historical_count": 0,
+        "total_requests_all_time": 0,
+        "total_bytes_all_time": 0,
+    }
+
+    pool = await _get_db_pool()
+    if pool:
+        try:
+            row = await pool.fetchrow(
+                "SELECT COUNT(*)::int AS cnt, COALESCE(SUM(requests), 0)::bigint AS reqs, COALESCE(SUM(bytes_sent), 0)::bigint AS bytes FROM tunnel_history"
+            )
+            if row:
+                summary["historical_count"] = row["cnt"]
+                summary["total_requests_all_time"] = row["reqs"]
+                summary["total_bytes_all_time"] = row["bytes"]
+        except Exception as e:
+            logger.warning("Stats DB query failed: %s", e)
+
+    return web.json_response({"active": active, "summary": summary})
+
+
+async def handle_history(request: web.Request) -> web.Response:
+    err = _check_admin(request)
+    if err:
+        return err
+
+    pool = await _get_db_pool()
+    if not pool:
+        return web.json_response({"error": "Database not configured"}, status=503)
+
+    limit = int(request.query.get("limit", "50"))
+    offset = int(request.query.get("offset", "0"))
+
+    try:
+        rows = await pool.fetch(
+            "SELECT * FROM tunnel_history ORDER BY ended_at DESC LIMIT $1 OFFSET $2",
+            limit, offset,
+        )
+        records = []
+        for row in rows:
+            records.append({
+                "id": row["id"],
+                "code": row["code"],
+                "started_at": row["started_at"].isoformat(),
+                "ended_at": row["ended_at"].isoformat(),
+                "duration_s": row["duration_s"],
+                "requests": row["requests"],
+                "bytes_sent": row["bytes_sent"],
+                "latency_ms": row["latency_ms"],
+            })
+        return web.json_response({"records": records, "limit": limit, "offset": offset})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
 
 
 def _rate_limited(ip: str) -> bool:
@@ -181,6 +292,19 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
             if not fut.done():
                 fut.set_exception(Exception("Tunnel disconnected"))
 
+        pool = await _get_db_pool()
+        if pool:
+            try:
+                ended_at = datetime.now(timezone.utc)
+                started_at = datetime.fromtimestamp(tunnel.start_time, tz=timezone.utc)
+                duration = int(time.time() - tunnel.start_time)
+                await pool.execute(
+                    "INSERT INTO tunnel_history (code, started_at, ended_at, duration_s, requests, bytes_sent, latency_ms) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+                    code, started_at, ended_at, duration, tunnel.request_count, tunnel.bytes_sent, tunnel.latency,
+                )
+            except Exception as e:
+                logger.warning("Failed to record tunnel history: %s", e)
+
     return ws
 
 
@@ -188,6 +312,13 @@ async def root_handler(request: web.Request) -> web.WebSocketResponse | web.Resp
     """Route incoming requests: WebSocket upgrades to ws_handler, others to handle_http."""
     if request.headers.get("Upgrade", "").lower() == "websocket":
         return await ws_handler(request)
+
+    path = request.path
+    if path == "/stats":
+        return await handle_stats(request)
+    if path == "/stats/history":
+        return await handle_history(request)
+
     return await handle_http(request)
 
 
@@ -206,6 +337,19 @@ async def run_server(port: int = 8080, auth_token: str = "") -> None:
     server_auth_token = auth_token
 
     logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
+
+    pool = await _get_db_pool()
+    if pool:
+        try:
+            await _ensure_stats_table(pool)
+            logger.info("Database connected, stats table ready")
+        except Exception as e:
+            logger.warning("Database init failed (stats disabled): %s", e)
+            global db_pool
+            await pool.close()
+            db_pool = None
+    else:
+        logger.info("No CUMMAND_DATABASE_URL set — history stats disabled")
 
     app = web.Application()
     app.router.add_get("/health", health)

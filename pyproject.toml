@@ -1,9 +1,9 @@
 [project]
 name = "cummand"
-version = "0.4.1"
+version = "0.4.2"
 description = "A lightweight CLI tool that securely tunnels your local development servers to the public internet using custom, memorable aliases."
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 requires-python = ">=3.11"
 keywords = ["tunnel", "ngrok", "cli", "http", "websocket", "development"]
 classifiers = [
@@ -24,7 +24,7 @@ dependencies = [
     "aiohttp>=3.9.0",
     "rich>=13.0.0",
     "tomli-w>=1.0.0",
- 
+    "asyncpg>=0.29.0",
 ]
 
 [project.urls]
