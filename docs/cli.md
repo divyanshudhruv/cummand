@@ -34,7 +34,7 @@ Global options available on all commands:
 ### Examples
 
 ```bash
-# Use the public relay (default — no --server needed)
+# Use the public relay (default - no --server needed)
 cummand tunnel http://localhost:3000
 
 # Profile: use a saved alias from config
@@ -79,7 +79,7 @@ This means two terminals: one for the server, one for the client.
 **Single-terminal mode** (`cummand serve --tunnel`) runs both in the same process using `asyncio.gather()`. The relay server handles inbound HTTP/WebSocket connections on its port, and the tunnel client simultaneously connects to that server and proxies your local app. You see logs from both in one terminal.
 
 ```bash
-# One command — starts relay on :8080 AND tunnels localhost:3000
+# One command - starts relay on :8080 AND tunnels localhost:3000
 cummand serve --tunnel http://localhost:3000
 ```
 

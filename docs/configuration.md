@@ -45,7 +45,7 @@ retry-limit = 5
 | Field         | Type    | Default                                 | Description                                                              |
 | ------------- | ------- | --------------------------------------- | ------------------------------------------------------------------------ |
 | `server-url`  | string  | `"wss://cummand.onrender.com"`          | Default relay server URL (public)                                        |
-| `public-url`  | string  | `"https://cummand.onrender.com/{code}"` | Public URL template — `{code}` is replaced with the tunnel's 4-word code |
+| `public-url`  | string  | `"https://cummand.onrender.com/{code}"` | Public URL template - `{code}` is replaced with the tunnel's 4-word code |
 | `auto-open`   | bool    | `true`                                  | Open tunnel URL in browser automatically                                 |
 | `log-level`   | string  | `"info"`                                | `"info"` or `"debug"`                                                    |
 | `retry-limit` | integer | `5`                                     | Max reconnection attempts before giving up                               |
