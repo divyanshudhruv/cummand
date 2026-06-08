@@ -8,8 +8,10 @@ A lightweight CLI tool that securely <code>tunnels</code> your local development
 <br>
 
 > [!IMPORTANT]\
-> The public `cummand` relay server at `cummand.onrender.com` is **free and open** for everyone. No auth token required — just use it. See [Quick Start](#quick-start) to get started in seconds.
+> The public `cummand` relay server at `cummand.onrender.com` is **free and open** for everyone. No auth token required; just use it. See [Quick Start](#quick-start) to get started in seconds.
 
+> [!NOTE]\
+> The commit message `style` and `format` are derived from standard [Gitlog](https://github.com/divyanshudhruv/gitlog) conventions.
 <br>
 
 ## Table of Contents
@@ -22,13 +24,13 @@ A lightweight CLI tool that securely <code>tunnels</code> your local development
 
 ## Features
 
-- **Free public relay** — no account, no setup, no API key needed
-- **Tunnel any local server** — expose `localhost:3000`, `localhost:5173`, or any port
-- **Live dashboard** — real-time stats: requests, data, latency, uptime
-- **4-word codes** — each tunnel gets a unique `color-adjective-animal-noun` (100M combos)
-- **Custom aliases** — save frequently used tunnels as named profiles
-- **Self-hostable** — deploy your own relay server on Render, VPS, or any cloud
-- **Rate limited** — IP throttling and global tunnel cap prevent abuse
+- **`Free public relay`** - no account, no setup, no API key needed
+- **`Tunnel any local server`** - expose `localhost:3000`, `localhost:5173`, or any port
+- **`Live dashboard`** - real-time stats: requests, data, latency, uptime
+- **`4-word codes`** - each tunnel gets a unique `color-adjective-animal-noun` (100M combos)
+- **`Custom aliases`** - save frequently used tunnels as named profiles
+- **`Self-hostable`** - deploy your own relay server on Render, VPS, or any cloud
+- **`Rate limited`** - IP throttling and global tunnel cap prevent abuse
 
 ## Installation
 
@@ -71,7 +73,7 @@ Your terminal shows a live dashboard:
 | Latency    | Round-trip time in ms                                     |
 | Uptime     | How long the tunnel has been active                       |
 
-Share the **Tunnel URL** with anyone — they'll see your local app.
+Share the **Tunnel URL** with anyone, they'll see your local app.
 
 To stop, press `Ctrl+C`.
 
@@ -91,13 +93,13 @@ To stop, press `Ctrl+C`.
 
 For full details, see:
 
-- **[CLI Reference](docs/cli.md)** — all commands, options, and examples
-- **[Configuration](docs/configuration.md)** — config file reference and advanced setup
-- **[Self-Hosting](docs/README.md#self-hosting)** — deploy your own relay server
+- **[CLI Reference](docs/cli.md)** - all commands, options, and examples
+- **[Configuration](docs/configuration.md)** - config file reference and advanced setup
+- **[Self-Hosting](docs/README.md#self-hosting)** - deploy your own relay server
 
 ## How It Works
 
-1. You run `cummand tunnel http://localhost:3000` — client opens a WebSocket to the relay
+1. You run `cummand tunnel http://localhost:3000` - client opens a WebSocket to the relay
 2. The server assigns a unique 4-word code like `crimson-swift-falcon-river`
 3. A visitor hits `https://cummand.onrender.com/crimson-swift-falcon-river`
 4. The server checks the **rate limiter** (max 5 WebSocket connects/min per IP, max 500 tunnels globally)
